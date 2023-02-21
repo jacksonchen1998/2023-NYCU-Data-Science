@@ -14,7 +14,7 @@
 * `python {student_id}.py crawl`
 爬 2022	年一整年文章
 * `python {student_id}.py push {start_date} {end_date}`
-計算推文/噓文和找出前 10	名最會推跟噓的人
+計算推文/噓文和找出前 10 名最會推跟噓的人
 * `python {student_id}.py popular {start_date} {end_date}`
 找爆文和圖片 URL
 * `python {student_id}.py keyword {keyword} {start_date} {end_date}`

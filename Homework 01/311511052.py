@@ -111,10 +111,16 @@ class BeautyCrawler:
                 else:
                     boo_ids[push_id] = 1
         return like_count, boo_count, like_ids, boo_ids
+    
+    def get_article_inside_img_urls(self, article_url):
+        r = requests.get(article_url, headers=self.headers)
+        soup = BeautifulSoup(r.text, 'html.parser')
+        # search all image url with http:// and https:// and ends with .jpg, .png, .gif, .jpeg
+        img_urls = requests.utils.re.findall(r'(https?://[^\s]*\.(?:jpg|png|gif|jpeg))', r.text)
+        return img_urls
         
 if __name__ == '__main__':
     # python 311511052.py crawl to execute crawler 
-    # python 311511052.py hello to print hello world
     # use sys.argv to get command line arguments
     if sys.argv[1] == 'crawl':
         start = time.time() # record execution time
@@ -187,6 +193,44 @@ if __name__ == '__main__':
             # write to jsonl file
             with open(f'push_{start_date}_{end_date}.json', 'a') as f:
                 f.write(json.dumps(res, indent=4, ensure_ascii=False))
+        end = time.time()
+        current, peak = tracemalloc.get_traced_memory()
+        print('Execution time: ', time.strftime("%H:%M:%S", time.gmtime(end - start)))
+        print('Memory usage: ', f'{current / 10**6}MB')
+        tracemalloc.stop()
+    elif sys.argv[1] == 'popular' and sys.argv[2] != None and sys.argv[3] != None:
+        start = time.time()
+        tracemalloc.start()
+        # set start date and end date
+        start_date = str(sys.argv[2])
+        end_date = str(sys.argv[3])
+        # if exists popular_start_date_end_date.json, delete it
+        if os.path.exists(f'popular_{start_date}_{end_date}.json'):
+            os.remove(f'popular_{start_date}_{end_date}.json')
+        # create jsonl file as popular_start_date_end_date.json
+        with open(f'popular_{start_date}_{end_date}.json', 'w') as f:
+            f.write('')
+        with open('all_popular.jsonl', 'r') as f:
+            res_popular_count = 0
+            image_urls = []
+            for line in f:
+                # convert string to dict
+                article = eval(line)
+                if int(start_date) <= int(article['date']) <= int(end_date):
+                    # crawl push data
+                    crawler = BeautyCrawler(0)
+                    # get popular count with all_popular.jsonl
+                    res_popular_count += 1
+                    # get_img_url_inside_article with all_popular.jsonl
+                    img_urls = crawler.get_article_inside_img_urls(article['url'])
+                    # merge img_urls to res_popular_img_urls
+                    image_urls += img_urls
+            # json format as {"number_of_popular_articles": int, "image_urls": [ "url1", "url2", ... ]}
+            res = {'number_of_popular_articles': res_popular_count}
+            res['image_urls'] = image_urls
+            # write to jsonl file
+            with open(f'popular_{start_date}_{end_date}.json', 'a') as f:
+                f.write(json.dumps(res, indent=4, ensure_ascii=False))  
         end = time.time()
         current, peak = tracemalloc.get_traced_memory()
         print('Execution time: ', time.strftime("%H:%M:%S", time.gmtime(end - start)))

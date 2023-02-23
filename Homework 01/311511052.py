@@ -1,3 +1,4 @@
+import threading
 import requests
 from bs4 import BeautifulSoup
 import tqdm
@@ -6,6 +7,9 @@ import time
 import tracemalloc
 import sys
 import json
+import concurrent.futures
+import queue
+import collections
 
 class BeautyCrawler:
     def __init__(self, index):
@@ -14,9 +18,14 @@ class BeautyCrawler:
         self.headers = {'cookie': 'over18=1;'}
         self.soup = None
         self.articles = []
-        self.imgs = []
         self.img_urls = []
         self.date = None
+        self.all_like = []
+        self.all_boo = []
+        self.like_id_count = {}
+        self.boo_id_count = {}
+        self.all_keywords_article = []
+        self.all_keywords_article_url = []
 
     def get_soup(self):
         r = requests.get(self.url, headers=self.headers)
@@ -88,30 +97,41 @@ class BeautyCrawler:
         with open('all_popular.jsonl', 'w') as f:
             f.writelines(lines[:-1])
 
-    def get_article_inside_like_count_with_id(self, article_url):
-        r = requests.get(article_url, headers=self.headers)
-        soup = BeautifulSoup(r.text, 'html.parser')
-        # get all push tags with class push-tag
-        pushes = soup.find_all('div', class_='push')
-        like_count, boo_count = 0, 0
-        like_ids, boo_ids = {}, {}
-        for push in pushes:
-            push_tag = push.find("span", class_='push-tag').string.strip()
-            push_id = push.find("span", class_='push-userid').string.strip()
-            if push_tag == '推':
-                like_count += 1
-                if push_id in like_ids:
-                    like_ids[push_id] += 1
-                else:
-                    like_ids[push_id] = 1
-            elif push_tag == '噓':
-                boo_count += 1
-                if push_id in boo_ids:
-                    boo_ids[push_id] += 1
-                else:
-                    boo_ids[push_id] = 1
-        return like_count, boo_count, like_ids, boo_ids
-    
+    def get_article_inside_like_count_with_id(self, queue):
+        # get article url from queue
+        # print each article url in queue
+        while True:
+            if queue.empty():
+                break
+            article_url = queue.get()
+            # count all like and all boo and each id's like and boo
+            like_count = 0
+            boo_count = 0
+            r = requests.get(article_url, headers=self.headers)
+            soup = BeautifulSoup(r.text, 'html.parser')
+            # find all push tag
+            pushes = soup.find_all('div', class_='push')
+            for push in pushes:
+                push_tag = push.find("span", class_='push-tag').string.strip()
+                push_id = push.find("span", class_='push-userid').string.strip()
+                if push_tag == '推':
+                    like_count += 1
+                    if push_id not in self.like_id_count:
+                        self.like_id_count[push_id] = 1
+                    else:
+                        self.like_id_count[push_id] += 1
+                elif push_tag == '噓':
+                    boo_count += 1
+                    if push_id not in self.boo_id_count:
+                        self.boo_id_count[push_id] = 1
+                    else:
+                        self.boo_id_count[push_id] += 1
+            # save data to thread_storage
+            self.all_boo += [boo_count]
+            self.all_like += [like_count]
+            queue.task_done()
+
+
     def get_article_inside_img_urls(self, article_url):
         r = requests.get(article_url, headers=self.headers)
         soup = BeautifulSoup(r.text, 'html.parser')
@@ -173,46 +193,48 @@ if __name__ == '__main__':
         with open(f'push_{start_date}_{end_date}.json', 'w') as f:
             f.write('')
         with open('all_article.jsonl', 'r') as f:
-            res_like_count, res_boo_count = 0, 0
-            res_like_ids, res_boo_ids = {}, {}
-            total_like_ids, total_boo_ids = {}, {}
+            storage_t = []
+            q = queue.Queue()
+            crawler = BeautyCrawler(0)
+            # thread storage as dict format {all_like: {res_like_count: int}, all_boo: {res_boo_count: int}, like 1: {id: str, count: int}, like 2: {id: str, count: int}, ...}
             for line in f:
                 # convert string to dict
                 article = eval(line)
                 if int(start_date) <= int(article['date']) <= int(end_date):
-                    # crawl push data
-                    crawler = BeautyCrawler(0)
-                    like_count, boo_count, res_like_ids, res_boo_ids = crawler.get_article_inside_like_count_with_id(article['url'])
-                    res_like_count += like_count
-                    res_boo_count += boo_count
-                    # merge res_like_ids and res_boo_ids to total_like_ids and total_boo_ids
-                    for key, value in res_like_ids.items():
-                        if key in total_like_ids:
-                            total_like_ids[key] += value
-                        else:
-                            total_like_ids[key] = value
-                    for key, value in res_boo_ids.items():
-                        if key in total_boo_ids:
-                            total_boo_ids[key] += value
-                        else:
-                            total_boo_ids[key] = value
-            # primary sort by value, secondary sort by key with dictioanry order
-            total_boo_ids = {k: v for k, v in sorted(total_boo_ids.items(), key=lambda item: (-item[1], item[0]))}
-            total_like_ids = {k: v for k, v in sorted(total_like_ids.items(), key=lambda item: (-item[1], item[0]))}
+                   # crawl every article in start_date and end_date's url from all_article.jsonl
+                    q.put(article['url'])
+            
+            # use 10 threads to crawl push data from queue
+            for i in range(10):
+                # store all like count and all boo count in thread_storage with list
+                t = threading.Thread(target=crawler.get_article_inside_like_count_with_id, args=(q,))
+                storage_t.append(t)
+                t.start()
+
+            # block until all tasks are done
+            for i in range(10):
+                t.join()
+
+            # wait until all threads finish
+            q.join()
+            # sort like id and boo id by count
+            sorted_like_id = sorted(crawler.like_id_count.items(), key=lambda x: x[1], reverse=True)
+            sorted_boo_id = sorted(crawler.boo_id_count.items(), key=lambda x: x[1], reverse=True)
+            # sort key based on dictionalry order from A to Z a to z, if count is same, sort by id
+            sorted_like_id = sorted(sorted_like_id, key=lambda x: (x[1], x[0]), reverse=True)
+            sorted_boo_id = sorted(sorted_boo_id, key=lambda x: (x[1], x[0]), reverse=True)
+            # get top 10 like id and boo id
+            top_10_like_id = sorted_like_id[:10]
+            top_10_boo_id = sorted_boo_id[:10]
             # json format as {all_like: {res_like_count: int}, all_boo: {res_boo_count: int}, like 1: {id: str, count: int}, like 2: {id: str, count: int}, ...}
-            res = {'all_like': {'res_like_count': res_like_count}, 'all_boo': {'res_boo_count': res_boo_count}}
-            # pick top 10 like ids and boo ids
-            for i, (key, value) in enumerate(total_like_ids.items()):
-                if i == 10:
-                    break
-                res[f'like {i+1}'] = {'user_id': key, 'count': value}
-            for i, (key, value) in enumerate(total_boo_ids.items()):
-                if i == 10:
-                    break
-                res[f'boo {i+1}'] = {'user_id': key, 'count': value}
-            # write to jsonl file
+            res = {'all_like': {'res_like_count': sum(crawler.all_like)}, 'all_boo': {'res_boo_count': sum(crawler.all_boo)}}
+            for i in range(10):
+                res[f'like {i+1}'] = {'user_id': top_10_like_id[i][0], 'count': top_10_like_id[i][1]}
+            for i in range(10):
+                res[f'boo {i+1}'] = {'user_id': top_10_boo_id[i][0], 'count': top_10_boo_id[i][1]}
+            # write json to push_start_date_end_date.jsonl
             with open(f'push_{start_date}_{end_date}.json', 'a') as f:
-                f.write(json.dumps(res, indent=4, ensure_ascii=False))
+                f.write(json.dumps(res, indent=4,ensure_ascii=False))
         end = time.time()
         current, peak = tracemalloc.get_traced_memory()
         print('Execution time: ', time.strftime("%H:%M:%S", time.gmtime(end - start)))
@@ -270,14 +292,18 @@ if __name__ == '__main__':
         # create jsonl file as keyword_start_date_end_date.json
         with open(f'keyword_{keyword}_{start_date}_{end_date}.json', 'w') as f:
             f.write('')
+        q = queue.Queue()
+        crawler = BeautyCrawler(0)
         with open('all_article.jsonl', 'r') as f:
             keyword_urls = []
             res_urls = []
             for line in f:
                 article = eval(line)
                 if int(start_date) <= int(article['date']) <= int(end_date):
-                    crawler = BeautyCrawler(0)
-                    # check_keyword_and_get_url with all_article.jsonl
+                    q.put(article['url'])
+                for i in range(10):
+                    t = threading.Thread(target=crawler.check_keyword_and_get_url, args=(keyword, article['url'], q))
+                    t.start()
                     keyword_url = crawler.check_keyword_and_get_url(keyword, article['url'])
                    # remove None
                     if keyword_url != None:

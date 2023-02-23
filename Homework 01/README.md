@@ -67,7 +67,7 @@
 找出在 `start_date`(含) 跟 `end_date`(含)之間的：
     * 爆文數量
     * 爆文的所有圖片網址 (包括推文和噓文的URL)
-    * 開頭是http://或https://，並且要以 jpg, jpeg, png, gif 為結尾，不限大小寫。
+    * 開頭是http:// 或 https://，並且要以 jpg, jpeg, png, gif 為結尾，不限大小寫。
 * 輸入:
     * `{start_date}`
     * `{end_date}`
@@ -138,4 +138,3 @@ Goal: We want to build a binary classifier for classifying whether the image are
 ### Potentially	useful	materials
 * [Face rating](https://github.com/HuyTu7/face_rating)
 * [Facial Beauty Prediction](https://towardsdatascience.com/how-attractive-are-you-in-the-eyes-of-deep-neural-network-3d71c0755ccc)
-– 

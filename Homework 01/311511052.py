@@ -116,8 +116,28 @@ class BeautyCrawler:
         r = requests.get(article_url, headers=self.headers)
         soup = BeautifulSoup(r.text, 'html.parser')
         # search all image url with http:// and https:// and ends with .jpg, .png, .gif, .jpeg
+        # but filter cache.ptt.cc
         img_urls = requests.utils.re.findall(r'(https?://[^\s]*\.(?:jpg|png|gif|jpeg))', r.text)
+        img_urls = [url for url in img_urls if 'cache.ptt.cc' not in url]
+        # remove duplicate urls
+        img_urls = list(set(img_urls))
         return img_urls
+    
+    def check_keyword_and_get_url(self, keyword, article_url):
+        r = requests.get(article_url, headers=self.headers)
+        soup = BeautifulSoup(r.text, 'html.parser')
+        # find content with class bbs-screen
+        content = soup.find('div', class_='bbs-screen')
+        # if keyword is in content, get image urls and return
+        if keyword in content.text:
+            img_urls = requests.utils.re.findall(r'(https?://[^\s]*\.(?:jpg|png|gif|jpeg))', r.text)
+            img_urls = [url for url in img_urls if 'cache.ptt.cc' not in url]
+            # remove duplicate urls
+            img_urls = list(set(img_urls))
+            # return image urls without list
+            return img_urls
+        else:
+            return None
         
 if __name__ == '__main__':
     # python 311511052.py crawl to execute crawler 
@@ -236,9 +256,50 @@ if __name__ == '__main__':
         print('Execution time: ', time.strftime("%H:%M:%S", time.gmtime(end - start)))
         print('Memory usage: ', f'{current / 10**6}MB')
         tracemalloc.stop()
+    elif sys.argv[1] == 'keyword' and sys.argv[2] != None and sys.argv[3] != None and sys.argv[4] != None:
+        # find image urls with keyword
+        start = time.time()
+        tracemalloc.start()
+        # set start date and end date
+        keyword = str(sys.argv[2])
+        start_date = str(sys.argv[3])
+        end_date = str(sys.argv[4])
+        # if exists keyword_start_date_end_date.json, delete it
+        if os.path.exists(f'keyword_{keyword}_{start_date}_{end_date}.json'):
+            os.remove(f'keyword_{keyword}_{start_date}_{end_date}.json')
+        # create jsonl file as keyword_start_date_end_date.json
+        with open(f'keyword_{keyword}_{start_date}_{end_date}.json', 'w') as f:
+            f.write('')
+        with open('all_article.jsonl', 'r') as f:
+            keyword_urls = []
+            res_urls = []
+            for line in f:
+                article = eval(line)
+                if int(start_date) <= int(article['date']) <= int(end_date):
+                    crawler = BeautyCrawler(0)
+                    # check_keyword_and_get_url with all_article.jsonl
+                    keyword_url = crawler.check_keyword_and_get_url(keyword, article['url'])
+                   # remove None
+                    if keyword_url != None:
+                        keyword_urls.append(keyword_url)
+            for url in keyword_urls:
+                res_urls += url
+            # all url store in keyword_urls with only one list
+            keyword_urls = res_urls
+            # json format as {"image_urls": [ "url1", "url2", ... ]}
+            res = {'image_urls': keyword_urls}
+            # write to jsonl file
+            with open(f'keyword_{keyword}_{start_date}_{end_date}.json', 'a') as f:
+                f.write(json.dumps(res, indent=4, ensure_ascii=False))
+        end = time.time()
+        current, peak = tracemalloc.get_traced_memory()
+        print('Execution time: ', time.strftime("%H:%M:%S", time.gmtime(end - start)))
+        print('Memory usage: ', f'{current / 10**6}MB')
+        tracemalloc.stop()
     elif sys.argv[1] == '-h':
         print('python 311511052.py crawl to execute crawler')
-        print('python 311511052.py hello to print hello world')
         print('python 311511052.py push start_date end_date to get push data')
+        print('python 311511052.py popular start_date end_date to get popular data')
+        print('python 311511052.py keyword keyword start_date end_date to get keyword data')
     else:
         print('Invalid command!, or you can use python 311511052.py -h to get help')

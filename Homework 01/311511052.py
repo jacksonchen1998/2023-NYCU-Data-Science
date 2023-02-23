@@ -143,21 +143,37 @@ class BeautyCrawler:
         img_urls = list(set(img_urls))
         return img_urls
     
-    def check_keyword_and_get_url(self, keyword, article_url):
-        r = requests.get(article_url, headers=self.headers)
-        soup = BeautifulSoup(r.text, 'html.parser')
-        # find content with class bbs-screen
-        content = soup.find('div', class_='bbs-screen')
-        # if keyword is in content, get image urls and return
-        if keyword in content.text:
-            img_urls = requests.utils.re.findall(r'(https?://[^\s]*\.(?:jpg|png|gif|jpeg))', r.text)
-            img_urls = [url for url in img_urls if 'cache.ptt.cc' not in url]
-            # remove duplicate urls
-            img_urls = list(set(img_urls))
-            # return image urls without list
-            return img_urls
-        else:
-            return None
+    def check_keyword_and_get_url(self, keyword, article_url, queue):
+        while True:
+            if queue.empty():
+                break
+            article_url = queue.get()
+            r = requests.get(article_url, headers=self.headers)
+            soup = BeautifulSoup(r.text, 'html.parser')
+            # find content with class bbs-screen
+            content = soup.find('div', class_='bbs-screen')
+            # if keyword is in content, get image urls and return
+            if keyword in content.text:
+                img_urls = requests.utils.re.findall(r'(https?://[^\s]*\.(?:jpg|png|gif|jpeg))', r.text)
+                img_urls = [url for url in img_urls if 'cache.ptt.cc' not in url]
+                # remove duplicate urls
+                self.all_keywords_article_url += list(set(img_urls))
+            queue.task_done()
+
+        # r = requests.get(article_url, headers=self.headers)
+        # soup = BeautifulSoup(r.text, 'html.parser')
+        # # find content with class bbs-screen
+        # content = soup.find('div', class_='bbs-screen')
+        # # if keyword is in content, get image urls and return
+        # if keyword in content.text:
+        #     img_urls = requests.utils.re.findall(r'(https?://[^\s]*\.(?:jpg|png|gif|jpeg))', r.text)
+        #     img_urls = [url for url in img_urls if 'cache.ptt.cc' not in url]
+        #     # remove duplicate urls
+        #     img_urls = list(set(img_urls))
+        #     # return image urls without list
+        #     return img_urls
+        # else:
+        #     return None
         
 if __name__ == '__main__':
     # python 311511052.py crawl to execute crawler 
@@ -297,23 +313,20 @@ if __name__ == '__main__':
         with open('all_article.jsonl', 'r') as f:
             keyword_urls = []
             res_urls = []
+            thread_t = []
             for line in f:
                 article = eval(line)
                 if int(start_date) <= int(article['date']) <= int(end_date):
                     q.put(article['url'])
-                for i in range(10):
-                    t = threading.Thread(target=crawler.check_keyword_and_get_url, args=(keyword, article['url'], q))
-                    t.start()
-                    keyword_url = crawler.check_keyword_and_get_url(keyword, article['url'])
-                   # remove None
-                    if keyword_url != None:
-                        keyword_urls.append(keyword_url)
-            for url in keyword_urls:
-                res_urls += url
-            # all url store in keyword_urls with only one list
-            keyword_urls = res_urls
+            for i in range(10):
+                t = threading.Thread(target=crawler.check_keyword_and_get_url, args=(keyword, article['url'], q))
+                thread_t.append(t)
+                t.start()
+            for i in range(10):
+                t.join()
+            q.join()
             # json format as {"image_urls": [ "url1", "url2", ... ]}
-            res = {'image_urls': keyword_urls}
+            res = {'image_urls': crawler.all_keywords_article_url}
             # write to jsonl file
             with open(f'keyword_{keyword}_{start_date}_{end_date}.json', 'a') as f:
                 f.write(json.dumps(res, indent=4, ensure_ascii=False))

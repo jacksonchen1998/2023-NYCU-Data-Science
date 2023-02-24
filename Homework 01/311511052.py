@@ -61,9 +61,9 @@ class BeautyCrawler:
     def save_all_article_jsonl(self):
         # check if all_article.jsonl exists, if not, create it, otherwise, append
         if not os.path.exists('all_article.jsonl') and not os.path.isfile('all_popular.jsonl'):
-            with open('all_article.jsonl', 'w') as f:
+            with open('all_article.jsonl', 'w', encoding="utf-8") as f:
                 f.write('')
-            with open('all_popular.jsonl', 'w') as f:
+            with open('all_popular.jsonl', 'w', encoding="utf-8") as f:
                 f.write('')
         for article in self.articles:
             article_data = {
@@ -74,27 +74,27 @@ class BeautyCrawler:
             # remove articles with [公告] or Fw: [公告] in title
             if '公告' in article_data['title'] or 'Fw: [公告]' in article_data['title']:
                 continue
-            with open('all_article.jsonl', 'a') as f:
+            with open('all_article.jsonl', 'a', encoding="utf-8") as f:
                 f.write(str(article_data) + '\n')
             if self.get_vote(article) == '爆':
-                with open('all_popular.jsonl', 'a') as f:
+                with open('all_popular.jsonl', 'a', encoding="utf-8") as f:
                     f.write(str(article_data) + '\n')
 
     def post_process_all_article(self):
         # delete_first_two_lines
-        with open('all_article.jsonl', 'r') as f:
+        with open('all_article.jsonl', 'r', encoding="utf-8") as f:
             lines = f.readlines()
-        with open('all_article.jsonl', 'w') as f:
+        with open('all_article.jsonl', 'w', encoding="utf-8") as f:
             f.writelines(lines[2:])
         # delete_last_four_lines
-        with open('all_article.jsonl', 'r') as f:
+        with open('all_article.jsonl', 'r', encoding="utf-8") as f:
             lines = f.readlines()
-        with open('all_article.jsonl', 'w') as f:
+        with open('all_article.jsonl', 'w', encoding="utf-8") as f:
             f.writelines(lines[:-4])
         # delete_last_one_line
-        with open('all_popular.jsonl', 'r') as f:
+        with open('all_popular.jsonl', 'r', encoding="utf-8") as f:
             lines = f.readlines()
-        with open('all_popular.jsonl', 'w') as f:
+        with open('all_popular.jsonl', 'w', encoding="utf-8") as f:
             f.writelines(lines[:-1])
 
     def get_article_inside_like_count_with_id(self, queue):
@@ -159,21 +159,6 @@ class BeautyCrawler:
                 # remove duplicate urls
                 self.all_keywords_article_url += list(set(img_urls))
             queue.task_done()
-
-        # r = requests.get(article_url, headers=self.headers)
-        # soup = BeautifulSoup(r.text, 'html.parser')
-        # # find content with class bbs-screen
-        # content = soup.find('div', class_='bbs-screen')
-        # # if keyword is in content, get image urls and return
-        # if keyword in content.text:
-        #     img_urls = requests.utils.re.findall(r'(https?://[^\s]*\.(?:jpg|png|gif|jpeg))', r.text)
-        #     img_urls = [url for url in img_urls if 'cache.ptt.cc' not in url]
-        #     # remove duplicate urls
-        #     img_urls = list(set(img_urls))
-        #     # return image urls without list
-        #     return img_urls
-        # else:
-        #     return None
         
 if __name__ == '__main__':
     # python 311511052.py crawl to execute crawler 
@@ -206,9 +191,9 @@ if __name__ == '__main__':
         if os.path.exists(f'push_{start_date}_{end_date}.json'):
             os.remove(f'push_{start_date}_{end_date}.json')
         # create jsonl file as push_start_date_end_date.jsonl
-        with open(f'push_{start_date}_{end_date}.json', 'w') as f:
+        with open(f'push_{start_date}_{end_date}.json', 'w', encoding="utf-8") as f:
             f.write('')
-        with open('all_article.jsonl', 'r') as f:
+        with open('all_article.jsonl', 'r', encoding="utf-8") as f:
             storage_t = []
             q = queue.Queue()
             crawler = BeautyCrawler(0)
@@ -249,7 +234,7 @@ if __name__ == '__main__':
             for i in range(10):
                 res[f'boo {i+1}'] = {'user_id': top_10_boo_id[i][0], 'count': top_10_boo_id[i][1]}
             # write json to push_start_date_end_date.jsonl
-            with open(f'push_{start_date}_{end_date}.json', 'a') as f:
+            with open(f'push_{start_date}_{end_date}.json', 'a', encoding="utf-8") as f:
                 f.write(json.dumps(res, indent=4,ensure_ascii=False))
         end = time.time()
         current, peak = tracemalloc.get_traced_memory()
@@ -266,9 +251,9 @@ if __name__ == '__main__':
         if os.path.exists(f'popular_{start_date}_{end_date}.json'):
             os.remove(f'popular_{start_date}_{end_date}.json')
         # create jsonl file as popular_start_date_end_date.json
-        with open(f'popular_{start_date}_{end_date}.json', 'w') as f:
+        with open(f'popular_{start_date}_{end_date}.json', 'w', encoding="utf-8") as f:
             f.write('')
-        with open('all_popular.jsonl', 'r') as f:
+        with open('all_popular.jsonl', 'r', encoding="utf-8") as f:
             res_popular_count = 0
             image_urls = []
             for line in f:
@@ -287,7 +272,7 @@ if __name__ == '__main__':
             res = {'number_of_popular_articles': res_popular_count}
             res['image_urls'] = image_urls
             # write to jsonl file
-            with open(f'popular_{start_date}_{end_date}.json', 'a') as f:
+            with open(f'popular_{start_date}_{end_date}.json', 'a', encoding="utf-8") as f:
                 f.write(json.dumps(res, indent=4, ensure_ascii=False))  
         end = time.time()
         current, peak = tracemalloc.get_traced_memory()
@@ -306,11 +291,11 @@ if __name__ == '__main__':
         if os.path.exists(f'keyword_{keyword}_{start_date}_{end_date}.json'):
             os.remove(f'keyword_{keyword}_{start_date}_{end_date}.json')
         # create jsonl file as keyword_start_date_end_date.json
-        with open(f'keyword_{keyword}_{start_date}_{end_date}.json', 'w') as f:
+        with open(f'keyword_{keyword}_{start_date}_{end_date}.json', 'w', encoding="utf-8") as f:
             f.write('')
         q = queue.Queue()
         crawler = BeautyCrawler(0)
-        with open('all_article.jsonl', 'r') as f:
+        with open('all_article.jsonl', 'r', encoding="utf-8") as f:
             keyword_urls = []
             res_urls = []
             thread_t = []
@@ -328,7 +313,7 @@ if __name__ == '__main__':
             # json format as {"image_urls": [ "url1", "url2", ... ]}
             res = {'image_urls': crawler.all_keywords_article_url}
             # write to jsonl file
-            with open(f'keyword_{keyword}_{start_date}_{end_date}.json', 'a') as f:
+            with open(f'keyword_{keyword}_{start_date}_{end_date}.json', 'a', encoding="utf-8") as f:
                 f.write(json.dumps(res, indent=4, ensure_ascii=False))
         end = time.time()
         current, peak = tracemalloc.get_traced_memory()

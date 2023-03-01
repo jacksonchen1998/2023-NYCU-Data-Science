@@ -39,6 +39,8 @@ class BeautyCrawler:
     def get_article_url(self, article):
         # gap timer to avoid getting banned
         time.sleep(0.01)
+        if article.find('a') is None:
+            return None
         return 'https://www.ptt.cc' + article.find('a')['href']
 
     def get_article_title(self, article):
@@ -81,16 +83,16 @@ class BeautyCrawler:
                     f.write(str(article_data) + '\n')
 
     def post_process_all_article(self):
-        # delete_first_two_lines
+        # delete_first_11_lines
         with open('all_article.jsonl', 'r', encoding="utf-8") as f:
             lines = f.readlines()
         with open('all_article.jsonl', 'w', encoding="utf-8") as f:
-            f.writelines(lines[2:])
+            f.writelines(lines[11:])
         # delete_last_four_lines
         with open('all_article.jsonl', 'r', encoding="utf-8") as f:
             lines = f.readlines()
         with open('all_article.jsonl', 'w', encoding="utf-8") as f:
-            f.writelines(lines[:-4])
+            f.writelines(lines[:-15])
         # delete_last_one_line
         with open('all_popular.jsonl', 'r', encoding="utf-8") as f:
             lines = f.readlines()
@@ -170,7 +172,7 @@ if __name__ == '__main__':
             os.remove('all_article.jsonl')
         if os.path.exists('all_popular.jsonl'): # delete all_popular.jsonl if exists
             os.remove('all_popular.jsonl')
-        for i in range(3647, 3956): # 3647, 3956
+        for i in range(3642, 3952): # 3642, 3951
             crawler = BeautyCrawler(i)
             crawler.get_soup()
             crawler.get_articles()

@@ -83,22 +83,38 @@ class BeautyCrawler:
                     f.write(str(article_data) + '\n')
 
     def post_process_all_article(self):
-        # delete_first_11_lines
         with open('all_article.jsonl', 'r', encoding="utf-8") as f:
-            lines = f.readlines()
-        with open('all_article.jsonl', 'w', encoding="utf-8") as f:
-            f.writelines(lines[11:])
-        # delete_last_four_lines
-        with open('all_article.jsonl', 'r', encoding="utf-8") as f:
-            lines = f.readlines()
-        with open('all_article.jsonl', 'w', encoding="utf-8") as f:
-            f.writelines(lines[:-15])
-        # delete_last_one_line
-        with open('all_popular.jsonl', 'r', encoding="utf-8") as f:
-            lines = f.readlines()
-        with open('all_popular.jsonl', 'w', encoding="utf-8") as f:
-            f.writelines(lines[:-1])
+            all_article = f.readlines()
+            # delete line utill the first line with date 0101
+            for i in range(len(all_article)):
+                if '0101' in all_article[i]:
+                    all_article = all_article[i:]
+                    break
+            # delete line after the last line with date 1231
+            for i in range(len(all_article)):
+                if '孟潔MJ' in all_article[i]:
+                    all_article = all_article[:i+1]
+                    break
+            # write back to all_article.jsonl
+            with open('all_article.jsonl', 'w', encoding="utf-8") as f:
+                f.writelines(all_article)
 
+        with open('all_popular.jsonl', 'r', encoding="utf-8") as f:
+            all_popular = f.readlines()
+            # delete line utill the first line with date 0101
+            for i in range(len(all_popular)):
+                if '0101' in all_popular[i]:
+                    all_popular = all_popular[i:]
+                    break
+            # delete line after the last line with date 1229
+            for i in range(len(all_popular)):
+                if '今際之國' in all_popular[i]:
+                    all_popular = all_popular[:i+1]
+                    break
+            # write back to all_popular.jsonl
+            with open('all_popular.jsonl', 'w', encoding="utf-8") as f:
+                f.writelines(all_popular)
+        
     def get_article_inside_like_count_with_id(self, queue):
         # get article url from queue
         # print each article url in queue
@@ -172,7 +188,7 @@ if __name__ == '__main__':
             os.remove('all_article.jsonl')
         if os.path.exists('all_popular.jsonl'): # delete all_popular.jsonl if exists
             os.remove('all_popular.jsonl')
-        for i in range(3642, 3952): # 3642, 3951
+        for i in range(3542, 3952): # 3642, 3951
             crawler = BeautyCrawler(i)
             crawler.get_soup()
             crawler.get_articles()

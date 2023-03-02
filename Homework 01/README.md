@@ -111,6 +111,17 @@
         }
         ```
 
+### Evaluation
+
+`bash exe.sh` can run all the test cases and generate the result.
+
+|task|command|time (hour:min:sec)|memory (MB)|
+|:-|:-|:-|:-|
+|crawl|`python 311511052.py crawl`|00:04:34|4.517032|
+|push|`python 311511052.py push 0101 1231`|00:04:45|7.431676|
+|popular|`python 311511052.py popular 0101 1231`|00:01:18|3.340951|
+|keyword|`python 311511052.py keyword 正妹 0101 1231`|00:04:21|19.695956|
+
 ## Popularity Predictor (15%)
 
 Goal: We want to build a binary classifier for classifying whether the image are in a popular article or not.

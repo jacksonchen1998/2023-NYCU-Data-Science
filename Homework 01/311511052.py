@@ -39,8 +39,6 @@ class BeautyCrawler:
     def get_article_url(self, article):
         # gap timer to avoid getting banned
         time.sleep(0.01)
-        if article.find('a') is None:
-            return None
         return 'https://www.ptt.cc' + article.find('a')['href']
 
     def get_article_title(self, article):
@@ -68,6 +66,9 @@ class BeautyCrawler:
             with open('all_popular.jsonl', 'w', encoding="utf-8") as f:
                 f.write('')
         for article in self.articles:
+            # skip if no link
+            if article.find('a') is None:
+                continue
             article_data = {
                 "date": self.get_article_date(article),
                 "title": self.get_article_title(article),

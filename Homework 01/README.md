@@ -164,7 +164,7 @@ Goal: We want to build a binary classifier for classifying whether the image are
             loss
         </th>
         <th>
-            F1 score
+            F1 / accuracy
         </th>
     </tr>
     <tr>
@@ -178,7 +178,8 @@ Goal: We want to build a binary classifier for classifying whether the image are
             <img src="./image/loss.png">
         </td>
         <td>
-            0.4
+            <code>0.405089127772486</code><br>
+            <code>0.7183738350868225</code>
         </td>
     </tr>
 </table>

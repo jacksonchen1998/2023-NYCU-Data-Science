@@ -141,6 +141,48 @@ Goal: We want to build a binary classifier for classifying whether the image are
     * 格式為一行01字串，代表分類結果：
     `10111000…….01`
 
+### First model
+
+- index 1
+    - RESNET50 fine tune
+    - lr: default
+    - optimizer: RMSprop
+- index 2
+    - RESNET50 fine tune and data augmentation
+    - lr: `0.0001`
+    - optimizer: sgd
+
+<table>
+    <tr>
+        <th>
+            index
+        </th>
+        <th>
+            accuracy
+        </th>
+        <th>
+            loss
+        </th>
+        <th>
+            F1 score
+        </th>
+    </tr>
+    <tr>
+        <td>
+            1
+        </td>
+        <td>
+            <img src="./image/acc.png">
+        </td>
+        <td>
+            <img src="./image/loss.png">
+        </td>
+        <td>
+            0.4
+        </td>
+    </tr>
+</table>
+
 > Environment: 
 > * Image: ubuntu: 22.04
 > * Python	Version: Python 3.10

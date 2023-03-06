@@ -149,8 +149,8 @@ Goal: We want to build a binary classifier for classifying whether the image are
     - optimizer: RMSprop
 - index 2
     - RESNET50 fine tune and data augmentation
-    - lr: `0.0001`
-    - optimizer: sgd
+    - lr: `0.00001`
+    - optimizer: Adam
 
 <table>
     <tr>
@@ -180,6 +180,21 @@ Goal: We want to build a binary classifier for classifying whether the image are
         <td>
             <code>0.405089127772486</code><br>
             <code>0.7183738350868225</code>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            2
+        </td>
+        <td>
+            <img src="./image/acc1.png">
+        </td>
+        <td>
+            <img src="./image/loss1.png">
+        </td>
+        <td>
+            <code>0.4456056408964996</code><br>
+            <code>0.8182489275932312</code>
         </td>
     </tr>
 </table>

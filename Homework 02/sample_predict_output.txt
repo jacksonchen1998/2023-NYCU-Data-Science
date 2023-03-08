@@ -1,0 +1,38 @@
+Testing on cuda:0
+E:\anaconda3\envs\py39_torch_1_13_1\lib\site-packages\torchvision\models\_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+E:\anaconda3\envs\py39_torch_1_13_1\lib\site-packages\torchvision\models\_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=ResNet18_Weights.IMAGENET1K_V1`. You can also use `weights=ResNet18_Weights.DEFAULT` to get the most up-to-date weights.
+  warnings.warn(msg)
+----------------------------------------------------------------
+        Layer (type)               Output Shape         Param #
+================================================================
+            Conv2d-1           [-1, 64, 14, 14]           9,408
+       BatchNorm2d-2           [-1, 64, 14, 14]             128
+              ReLU-3           [-1, 64, 14, 14]               0
+         MaxPool2d-4             [-1, 64, 7, 7]               0
+            Conv2d-5             [-1, 64, 7, 7]          36,864
+       BatchNorm2d-6             [-1, 64, 7, 7]             128
+              ReLU-7             [-1, 64, 7, 7]               0
+            Conv2d-8             [-1, 64, 7, 7]          36,864
+       BatchNorm2d-9             [-1, 64, 7, 7]             128
+             ReLU-10             [-1, 64, 7, 7]               0
+       BasicBlock-11             [-1, 64, 7, 7]               0
+           Conv2d-12             [-1, 64, 7, 7]          36,864
+      BatchNorm2d-13             [-1, 64, 7, 7]             128
+             ReLU-14             [-1, 64, 7, 7]               0
+           Conv2d-15             [-1, 64, 7, 7]          36,864
+      BatchNorm2d-16             [-1, 64, 7, 7]             128
+             ReLU-17             [-1, 64, 7, 7]               0
+       BasicBlock-18             [-1, 64, 7, 7]               0
+           Conv2d-19            [-1, 128, 4, 4]          73,728
+================================================================
+Total params: 11,181,642
+Trainable params: 11,181,642
+Non-trainable params: 0
+----------------------------------------------------------------
+Input size (MB): 0.01
+Forward/backward pass size (MB): 1.09
+Params size (MB): 42.65
+Estimated Total Size (MB): 43.75
+----------------------------------------------------------------
+Accuracy of the network on the 10000 test images: 90.69 %

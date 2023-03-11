@@ -117,12 +117,52 @@ criterion = nn.CrossEntropyLoss()
 loss = criterion(outputs, labels)
 ```
 
-| Index | TSMA | lr | epoch | batch_size | T |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `0.9096` | `0.001` | `30` | `64` | `20` |
-| 2 | `0.9102` | `0.0005` | `30` | `64` | `20` |
-| 3 | `0.9106` | `0.00075` | `50` | `64` | `20` |
-| 4 | `0.9130` | `0.00075` | `100` | `64` | `40` |
+<table>
+  <thead>
+    <tr>
+      <th>Index</th>
+      <th>TSMA</th>
+      <th>lr</th>
+      <th>epoch</th>
+      <th>batch_size</th>
+      <th>T</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>0.9096</td>
+      <td>0.001</td>
+      <td>30</td>
+      <td>64</td>
+      <td>20</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>0.9102</td>
+      <td>0.0005</td>
+      <td>30</td>
+      <td>64</td>
+      <td>20</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>0.9106</td>
+      <td>0.00075</td>
+      <td>50</td>
+      <td>64</td>
+      <td>20</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>0.9130</td>
+      <td>0.00075</td>
+      <td>100</td>
+      <td>64</td>
+      <td>40</td>
+    </tr>
+  </tbody>
+</table>
 
 - Loss Function: MSELoss
 
@@ -131,10 +171,28 @@ criterion = nn.MSELoss()
 loss = criterion(outputs, F.one_hot(labels, 10).float())
 ```
 
-| Index  | SMA | TSMA | lr | epoch | batch_size | T |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `0.8890` | `0.8871` | `0.001` | `100` | `64` | `40` |
-
+<table>
+  <thead>
+    <tr>
+      <th>Index</th>
+      <th>TSMA</th>
+      <th>lr</th>
+      <th>epoch</th>
+      <th>batch_size</th>
+      <th>T</th>
+    </tr>
+  </thead>
+ <tbody>
+    <tr>
+      <td>1</td>
+      <td>0.8890</td>
+      <td>0.001</td>
+      <td>100</td>
+      <td>64</td>
+      <td>40</td>
+    </tr>
+  </tbody>
+</table>
 
 #### Simple model 2
 
@@ -212,9 +270,28 @@ criterion = nn.CrossEntropyLoss()
 loss = criterion(outputs, labels)
 ```
 
-| Index | TSMA | lr | epoch | batch_size | T |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `0.9311` | `0.00075` | `100` | `64` | `40` |
+<table>
+  <thead>
+    <tr>
+      <th>Index</th>
+      <th>TSMA</th>
+      <th>lr</th>
+      <th>epoch</th>
+      <th>batch_size</th>
+      <th>T</th>
+    </tr>
+  </thead>
+ <tbody>
+    <tr>
+      <td>1</td>
+      <td>0.9311</td>
+      <td>0.00075</td>
+      <td>100</td>
+      <td>64</td>
+      <td>40</td>
+    </tr>
+  </tbody>
+</table>
 
 ### Simple model 3
 
@@ -259,16 +336,84 @@ criterion = nn.CrossEntropyLoss()
 loss = criterion(outputs, labels)
 ```
 
-| Index   | TSMA | lr | epoch | batch_size | T |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `0.9311` | `0.0005` | `100` | `64` | `40` |
-| 2 | `0.9286` | `0.0005` | `100` | `128` | `40` |
-| 3 | `0.9313` | `0.001` | `100` | `128` | `40` |
-| 4 | `0.9302` | `0.005` | `100` | `128` | `40` |
-| 5 | `0.9322` | `0.001` | `100` | `64` | `40` |
-| 6 | `0.9307` | `0.001` | `100` | `64` | `4` |
-| 7 | `0.9330` | `0.001` | `100` | `64` | `40` |
-| 8 | `0.9319` | `0.0015` | `100` | `64` | `40` |
+<table>
+  <thead>
+    <tr>
+      <th>Index</th>
+      <th>TSMA</th>
+      <th>lr</th>
+      <th>epoch</th>
+      <th>batch_size</th>
+      <th>T</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>0.9311</td>
+      <td>0.0005</td>
+      <td>100</td>
+      <td>64</td>
+      <td>40</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>0.9286</td>
+      <td>0.0005</td>
+      <td>100</td>
+      <td>128</td>
+      <td>40</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>0.9313</td>
+      <td>0.001</td>
+      <td>100</td>
+      <td>128</td>
+      <td>40</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>0.9302</td>
+      <td>0.005</td>
+      <td>100</td>
+      <td>128</td>
+      <td>40</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>0.9322</td>
+      <td>0.001</td>
+      <td>100</td>
+      <td>64</td>
+      <td>40</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>0.9307</td>
+      <td>0.001</td>
+      <td>100</td>
+      <td>64</td>
+      <td>4</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>0.9330</td>
+      <td>0.001</td>
+      <td>100</td>
+      <td>64</td>
+      <td>40</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>0.9319</td>
+      <td>0.0015</td>
+      <td>100</td>
+      <td>64</td>
+      <td>40</td>
+    </tr>
+  </tbody>
+</table>
 
 ### Demo Platform
 - OS: Ubuntu 20.04

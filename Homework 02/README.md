@@ -9,6 +9,35 @@ Several ways to compress the model:
 - Pruning
 - Model Architecture Design
 
+In this homework, we use **Knowledge Distillation** to compress the model.
+
+To run the model training code, please use the following command:
+
+```
+python3 hw2_311511052.py --batch_size 128 --num_epochs 300 \ 
+--learning_rate 0.0035 --T 40 --alpha 0.5 --factor 0.2 --patience 10 --min_lr 0.0001
+```
+
+The arguments are as follows:
+- `batch_size`: batch size
+- `num_epochs`: number of epochs
+- `learning_rate`: learning rate
+- `T`: temperature for knowledge distillation
+- `alpha`: alpha for knowledge distillation
+- `factor`: factor for learning rate scheduler
+- `patience`: patience for learning rate scheduler
+- `min_lr`: minimum learning rate
+
+And then the program will automatically store the pth file in the `pth_folder` folder. And the csv file will be stored in the `submission_folder` folder.
+
+To test the pth file, please use the following command:
+
+```
+python3 test_model.py --model ./pth_folder/[your pth name].pth
+```
+
+Then the program will generate the summary of the model and the accuracy of the model.
+
 ### Problem Description
 - Dataset: Fashion-MNIST
 - Input: Well-trained ResNet-50 model
@@ -558,7 +587,7 @@ And I also tried to set the gamma to `0.99` and update the scheduler every `150`
       <td><code>0.99</code> / <code>100</code></td>
     </tr>
     <tr>
-      <td><code>3</code></td>
+      <td><code>4</code></td>
       <td><code>0.9352</code></td>
       <td><code>0.002</code></td>
       <td><code>300</code></td>
@@ -569,19 +598,16 @@ And I also tried to set the gamma to `0.99` and update the scheduler every `150`
   </tbody>
 </table>
 
-* Using transfer learning and then fine-tuning
+==**Shell Script Auto**==
 
-First `20` epochs, using the pre-trained model to train the model, and then `200` epochs, using the fine-tuned model to train the model.
-
+Set the gamma to `0.99` and update the scheduler every `50` epochs, for total `500` epochs.
 <table>
   <thead>
     <tr>
       <th>Index</th>
-      <th>Transfer</th>
-      <th>TS_Fine_Tune</th>
+      <th>TSMA</th>
       <th>lr</th>
-      <th>Transfer_epoch</th>
-       <th>TS_Fine_Tune_epch</th>
+      <th>epoch</th>
       <th>batch_size</th>
       <th>T</th>
       <th>Scheduler<br>(gamma per eopch)</th>
@@ -590,17 +616,71 @@ First `20` epochs, using the pre-trained model to train the model, and then `200
   <tbody>
     <tr>
       <td><code>1</code></td>
-      <td><code>0.</code></td>
-      <td><code>0.</code></td>
-      <td><code>0.002</code></td>
-      <td><code>20</code></td>
-      <td><code>200</code></td>
+      <td><code>0.9358</code></td>
+      <td><code>0.0025</code></td>
+      <td><code>500</code></td>
+      <td><code>128</code></td>
+      <td><code>40</code></td>
+      <td><code>0.99</code> / <code>50</code></td>
+    </tr>
+    <tr>
+      <td><code>2</code></td>
+      <td><code>0.9361</code></td>
+      <td><code>0.003</code></td>
+      <td><code>500</code></td>
+      <td><code>128</code></td>
+      <td><code>40</code></td>
+      <td><code>0.99</code> / <code>50</code></td>
+    </tr>
+    <tr>
+      <td><code>3</code></td>
+      <td><code>0.9377</code></td>
+      <td><code>0.0035</code></td>
+      <td><code>500</code></td>
+      <td><code>128</code></td>
+      <td><code>40</code></td>
+      <td><code>0.99</code> / <code>50</code></td>
+    </tr>
+    <tr>
+      <td><code>4</code></td>
+      <td><code>0.9339</code></td>
+      <td><code>0.0025</code></td>
+      <td><code>500</code></td>
       <td><code>64</code></td>
       <td><code>40</code></td>
-      <td><code>0.99</code> / <code>100</code></td>
+      <td><code>0.99</code> / <code>50</code></td>
+    </tr>
+    <tr>
+      <td><code>5</code></td>
+      <td><code>0.9340</code></td>
+      <td><code>0.0025</code></td>
+      <td><code>500</code></td>
+      <td><code>64</code></td>
+      <td><code>40</code></td>
+      <td><code>0.99</code> / <code>50</code></td>
+    </tr>
+    <tr>
+      <td><code>6</code></td>
+      <td><code>0.9353</code></td>
+      <td><code>0.003</code></td>
+      <td><code>500</code></td>
+      <td><code>64</code></td>
+      <td><code>40</code></td>
+      <td><code>0.99</code> / <code>50</code></td>
     </tr>
   </tbody>
 </table>
+
+* Data augmentation: RandomCrop, RandomHorizontalFlip, RandomRotation, ToTensor, RandomGrayscale, Normalize
+```
+train_transform = transforms.Compose(
+        [transforms.Grayscale(num_output_channels=3),
+        transforms.ToTensor(),
+        transforms.RandomHorizontalFlip(p=0.3),
+        transforms.RandomRotation(15),
+        transforms.RandomCrop(28, padding=4),
+        transforms.Normalize((0.5,), (0.5,))])
+```
 
 ### Simple model 5
 
@@ -689,16 +769,6 @@ Estimated Total Size (MB): 1.25
       <td><code>40</code></td>
       <td><code>0.99</code> / <code>50</code></td>
       <td><code>0.35</code></td>
-    </tr>
-    <tr>
-      <td><code>2</code></td>
-      <td><code>0.</code></td>
-      <td><code>0.0005</code></td>
-      <td><code>500</code></td>
-      <td><code>64</code></td>
-      <td><code>40</code></td>
-      <td><code>0.99</code> / <code>50</code></td>
-      <td><code>0.1</code></td>
     </tr>
   </tbody>
 </table>

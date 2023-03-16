@@ -14,7 +14,7 @@ In this homework, we use **Knowledge Distillation** to compress the model.
 To run the model training code, please use the following command:
 
 ```
-python3 hw2_311511052.py --batch_size 128 --num_epochs 300 \ 
+python3 hw2_311511052.py --batch_size 128 --num_epochs 300
 --learning_rate 0.0035 --T 40 --alpha 0.5 --factor 0.2 --patience 10 --min_lr 0.0001
 ```
 

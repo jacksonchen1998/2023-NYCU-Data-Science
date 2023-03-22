@@ -4,6 +4,8 @@
 
 [Kaggle Competition](https://www.kaggle.com/competitions/model-compression-on-fashion-mnist/overview)
 
+**The final accuracy for the kaggle competition is 0.9393**
+
 Several ways to compress the model:
 - Knowledge Distillation
 - Pruning

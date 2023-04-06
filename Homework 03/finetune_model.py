@@ -139,6 +139,11 @@ test_acc = []
 test_loss = []
 
 for task_idx in range(600):
+
+    sup_transform = transforms.Compose(
+        [transforms.Grayscale(num_output_channels=3),
+        transforms.Normalize((0.5,), (0.5,))])
+
     sup_dataset = CustomDataset(test["sup_images"][task_idx], test["sup_labels"][task_idx], transform=sup_transform)
     sup_loader = torch.utils.data.DataLoader(sup_dataset, batch_size = 25, shuffle=False, num_workers=0)
     
@@ -159,7 +164,7 @@ for task_idx in range(600):
     #)
 
     fnn = nn.Sequential(
-        nn.Linear(80, 5),
+        #nn.Linear(80, 5),
         nn.Linear(80, 32),
         nn.ReLU(inplace=True),
         nn.Linear(32, 5)

@@ -1,28 +1,13 @@
 import pickle
 import torch
-import torchvision
 import torchvision.transforms as transforms
-import tqdm
 import numpy as np
-from torchsummary import summary
 import torch.nn as nn
 import matplotlib.pyplot as plt
 import csv
-
-with open("./train.pkl", "rb") as f:
-    train = pickle.load(f) # a dictionary
-
-with open("./validation.pkl", "rb") as f:
-    val = pickle.load(f) # a dictionary
     
 with open("./test.pkl", "rb") as f:
     test = pickle.load(f) # a dictionary
-
-new_train = {}
-new_train['images'] = np.concatenate((train['images'], val['images']), axis=0)
-new_train['labels'] = np.concatenate((train['labels'], val['labels']), axis=0)
-
-#device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 train_transform = transforms.Compose(
         [transforms.Grayscale(num_output_channels=3),
@@ -51,13 +36,6 @@ class CustomDataset(torch.utils.data.Dataset):
                 if self.transform:
                         image = self.transform(image)
                 return image, label
-
-# doing data augmentation for train["images"]
-train_dataset = CustomDataset(new_train["images"], new_train["labels"], transform=train_transform)
-val_dataset = CustomDataset(val["images"], val["labels"], transform=val_transform)
-train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=128, shuffle=True, num_workers=0)
-val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=128, shuffle=True, num_workers=0)
-
 
 class ResNetBlock(torch.nn.Module):
     def __init__(self, in_channels, out_channels, stride=1):
@@ -127,21 +105,16 @@ class ResNet18(torch.nn.Module):
             _, predicted = torch.max(output, 1)
             return predicted.item()
 
-
-#for param in model.parameters():
-#    param.requires_grad = False
-
 qry_images = test["qry_images"]
 # test_labels size is 15000
 test_labels = np.zeros((15000))
-
-test_acc = []
-test_loss = []
 
 for task_idx in range(600):
 
     sup_transform = transforms.Compose(
         [transforms.Grayscale(num_output_channels=3),
+        transforms.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1), shear=15),
+        transforms.RandomHorizontalFlip(),
         transforms.Normalize((0.5,), (0.5,))])
 
     sup_dataset = CustomDataset(test["sup_images"][task_idx], test["sup_labels"][task_idx], transform=sup_transform)
@@ -155,32 +128,30 @@ for task_idx in range(600):
 
     if torch.cuda.device_count() > 1:
         model = nn.DataParallel(model)
+
+    for param in model.parameters():
+        param.requires_grad = False
+   
     num_ftrs = model.fc.in_features
     model.fc = nn.Linear(num_ftrs, 80)
 
-    # Add a new fully connected layer after the original classifier to output 5 classes
-    #fnn = nn.Sequential(
-    #    nn.Linear(80, 5),
-    #)
-
     fnn = nn.Sequential(
-        #nn.Linear(80, 5),
-        nn.Linear(80, 32),
+        nn.Dropout(0.5),
         nn.ReLU(inplace=True),
-        nn.Linear(32, 5)
+        nn.Linear(80, 5),
     )
 
     # Combine the ResNet18 model and the FNN
     fine_model = nn.Sequential(model, fnn).to(device)
-    optimizer = torch.optim.Adam(fine_model.parameters(), lr=0.001)
-    #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=6000, gamma=0.9)
+    optimizer = torch.optim.Adam(fine_model.parameters(), lr=1e-3)
     criterion = torch.nn.CrossEntropyLoss()
     fine_model.train()
     sup_loss = 0
     sup_acc = 0
     epoch = 0
+    print("Task: {}".format(task_idx))
     # fine tune the model with sup images util the accuracy larger than 0.95
-    while sup_acc/(25) < 0.95 and epoch < 50:
+    while epoch < 50:
         sup_acc = 0
         sup_loss = 0
         for batch_idx, (data, target) in enumerate(sup_loader):
@@ -192,13 +163,14 @@ for task_idx in range(600):
             sup_loss += loss.item()
             _, predicted = torch.max(output.data, 1)
             sup_acc += (predicted == target.to(device)).sum().item()
+            print("Epoch: {}, Support accuracy: {}, Support loss: {}".format(epoch, sup_acc/len(sup_loader.dataset), sup_loss/len(sup_loader.dataset)))
         epoch += 1
-        print("Task: {}, Epoch: {}, Accuarcy: {}, Loss: {}".format(task_idx, epoch, sup_acc/(25), sup_loss/(25)))
-        # predict the qry images
+
         fine_model.eval()
         with torch.no_grad():
-            # use qry_images[i][j] to predict the label, but no label
-            # np array to tensor
+
+            pred_acc = 0
+
             for j in range(25):
                 image = torch.from_numpy(qry_images[task_idx][j])
                 image = image.unsqueeze(0)
@@ -209,25 +181,6 @@ for task_idx in range(600):
                 
                 # save the predicted label to test_labels[j]
                 test_labels[task_idx*25+j] = predicted.item()
-    test_acc.append(sup_acc/(25))
-    test_loss.append(sup_loss/(25))
-
-#plot the loss and accuracy
-plt.figure(figsize=(10, 10))
-plt.plot(test_loss, label='sup')
-plt.xlabel('Epoch')
-plt.ylabel('Sup image loss')
-plt.title('Loss')
-plt.savefig('Sup_Loss.png')
-plt.legend()
-
-plt.figure(figsize=(10, 10))
-plt.plot(test_acc, label='sup')
-plt.title('Sup image accuracy')
-plt.xlabel('Epoch')
-plt.ylabel('Accuracy')
-plt.savefig('Sup_Accuracy.png')
-plt.legend()
 
 with open('test_labels.csv', 'w', newline='') as csvfile:
     writer = csv.writer(csvfile)

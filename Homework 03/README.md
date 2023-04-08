@@ -32,6 +32,8 @@ For each task, there are 5 unique labels (0~4). Note that these labels are defin
 
 First, you need conda to install the required packages from `requirements.txt`.
 
+The `train.pkl` and `validation.pkl` and `test.pkl` are set to be located in the current directory.
+
 Then, you need to implement the following methods:
 
 1. Merge the data from `train.pkl` and `validation.pkl` to form a new dataset called `new_train`.

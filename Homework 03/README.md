@@ -27,3 +27,17 @@ In order to successfully complete this homework, you need to pay close attention
     There are 600 5-way-5-shot tasks.
 
 For each task, there are 5 unique labels (0~4). Note that these labels are defined locally for each task, which are different from the `train.pkl` and `validation.pkl`.
+
+## Methods
+
+First, you need conda to install the required packages from `requirements.txt`.
+
+Then, you need to implement the following methods:
+
+1. Merge the data from `train.pkl` and `validation.pkl` to form a new dataset called `new_train`.
+2. Train a model on `new_train` with ResNet-18 as the backbone. It should reach 99% accuracy on `new_train` dataset.
+3. Fine-tune the model on each task in `test.pkl` with 5-way-5-shot support set until epoch `50` for each task.
+    - You can use the same model as the backbone. You can
+        - Remove the last layer of the model and add a new linear layer with 5 classes.
+        - Add a new linear layer with 5 classes from the last layer of the model.
+4. At least we can get average `0.63` accuracy on the query set of each task.

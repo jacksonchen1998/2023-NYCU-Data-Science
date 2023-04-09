@@ -5,9 +5,10 @@ import numpy as np
 import torch.nn as nn
 import matplotlib.pyplot as plt
 import csv
-    
+
 with open("./test.pkl", "rb") as f:
     test = pickle.load(f) # a dictionary
+
 
 train_transform = transforms.Compose(
         [transforms.Grayscale(num_output_channels=3),
@@ -108,6 +109,7 @@ class ResNet18(torch.nn.Module):
 qry_images = test["qry_images"]
 # test_labels size is 15000
 test_labels = np.zeros((15000))
+total_epoch = 50
 
 for task_idx in range(600):
 
@@ -123,7 +125,7 @@ for task_idx in range(600):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     model = ResNet18().to(device)
-    checkpoint = torch.load('model.pth', map_location=device)
+    checkpoint = torch.load('model_87.pth', map_location=device)
     model.load_state_dict(checkpoint, strict=False)
 
     if torch.cuda.device_count() > 1:
@@ -131,7 +133,7 @@ for task_idx in range(600):
 
     for param in model.parameters():
         param.requires_grad = False
-   
+    
     num_ftrs = model.fc.in_features
     model.fc = nn.Linear(num_ftrs, 80)
 
@@ -144,14 +146,14 @@ for task_idx in range(600):
     # Combine the ResNet18 model and the FNN
     fine_model = nn.Sequential(model, fnn).to(device)
     optimizer = torch.optim.Adam(fine_model.parameters(), lr=1e-3)
+    #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.8)
     criterion = torch.nn.CrossEntropyLoss()
     fine_model.train()
     sup_loss = 0
     sup_acc = 0
     epoch = 0
-    print("Task: {}".format(task_idx))
     # fine tune the model with sup images util the accuracy larger than 0.95
-    while epoch < 50:
+    while epoch < total_epoch:
         sup_acc = 0
         sup_loss = 0
         for batch_idx, (data, target) in enumerate(sup_loader):
@@ -160,14 +162,17 @@ for task_idx in range(600):
             loss = criterion(output, target.to(device))
             loss.backward()
             optimizer.step()
+            #scheduler.step()
             sup_loss += loss.item()
             _, predicted = torch.max(output.data, 1)
             sup_acc += (predicted == target.to(device)).sum().item()
-            print("Epoch: {}, Support accuracy: {}, Support loss: {}".format(epoch, sup_acc/len(sup_loader.dataset), sup_loss/len(sup_loader.dataset)))
         epoch += 1
-
+        #print("Task: {}, Epoch: {}, Accuarcy: {}, Loss: {}".format(task_idx, epoch, sup_acc/(25), sup_loss/(25)))
+        # predict the qry images
         fine_model.eval()
         with torch.no_grad():
+            # use qry_images[i][j] to predict the label, but no label
+            # np array to tensor
 
             pred_acc = 0
 
@@ -187,4 +192,3 @@ with open('test_labels.csv', 'w', newline='') as csvfile:
     writer.writerow(['Id', 'Category'])
     for i in range(15000):
         writer.writerow([i, int(test_labels[i])])
-

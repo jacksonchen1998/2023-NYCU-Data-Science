@@ -128,7 +128,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=7500, gamma=0.65) # step_size: how many epochs to decay the learning rate by gamma
 
 # train the model
-train_epoch = 100
+train_epoch = 40
 train_acc = []
 train_loss = []
 val_acc = []

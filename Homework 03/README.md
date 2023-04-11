@@ -37,8 +37,8 @@ The `train.pkl` and `validation.pkl` and `test.pkl` are set to be located in the
 Then, you need to implement the following methods:
 
 1. Merge the data from `train.pkl` and `validation.pkl` to form a new dataset called `new_train`.
-2. Train a model on `new_train` with ResNet-18 as the backbone for 80 classes. And the total number of epochs is `40`. It can reach `0.87` accuracy on the `new_train` dataset.
-3. Fine-tune the model on each task in `test.pkl` with 5-way-5-shot support set until epoch `50` for each task.
+2. Train a model on `new_train` with ResNet-18 as the backbone for 80 classes. It should reach `87%` accuracy on `new_train` dataset in `40` epochs.
+3. Fine-tune the model on each task in `test.pkl` with 5-way-5-shot support set until epoch `25` for each task.
     - Remove the last layer of the model and add a new linear layer with 5 classes.
     - Or, adding a new linear layer with 5 classes from the last layer of the model.
-4. At least we can get average `0.65` accuracy on the query set of each task.
+4. At least we can get average `0.66` accuracy on the query set of each task.

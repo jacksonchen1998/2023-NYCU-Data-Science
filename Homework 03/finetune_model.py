@@ -1,14 +1,28 @@
 import pickle
 import torch
+import torchvision
 import torchvision.transforms as transforms
+import tqdm
 import numpy as np
+from torchsummary import summary
 import torch.nn as nn
 import matplotlib.pyplot as plt
 import csv
+'''
+with open("./train.pkl", "rb") as f:
+    train = pickle.load(f) # a dictionary
 
+with open("./validation.pkl", "rb") as f:
+    val = pickle.load(f) # a dictionary
+''' 
 with open("./test.pkl", "rb") as f:
     test = pickle.load(f) # a dictionary
+'''
+new_train = {}
+new_train['images'] = np.concatenate((train['images'], val['images']), axis=0)
+new_train['labels'] = np.concatenate((train['labels'], val['labels']), axis=0)
 
+#device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 train_transform = transforms.Compose(
         [transforms.Grayscale(num_output_channels=3),
@@ -20,7 +34,7 @@ train_transform = transforms.Compose(
 val_transform = transforms.Compose(
         [transforms.Grayscale(num_output_channels=3),
         transforms.Normalize((0.5,), (0.5,))])
-
+'''
 class CustomDataset(torch.utils.data.Dataset):
         def __init__(self, images, labels, transform=None):
                 # load data from numpy array
@@ -37,6 +51,13 @@ class CustomDataset(torch.utils.data.Dataset):
                 if self.transform:
                         image = self.transform(image)
                 return image, label
+'''
+# doing data augmentation for train["images"]
+train_dataset = CustomDataset(new_train["images"], new_train["labels"], transform=train_transform)
+val_dataset = CustomDataset(val["images"], val["labels"], transform=val_transform)
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=128, shuffle=True, num_workers=0)
+val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=128, shuffle=True, num_workers=0)
+'''
 
 class ResNetBlock(torch.nn.Module):
     def __init__(self, in_channels, out_channels, stride=1):
@@ -109,7 +130,7 @@ class ResNet18(torch.nn.Module):
 qry_images = test["qry_images"]
 # test_labels size is 15000
 test_labels = np.zeros((15000))
-total_epoch = 50
+total_epoch = 25
 
 for task_idx in range(600):
 
@@ -125,7 +146,7 @@ for task_idx in range(600):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     model = ResNet18().to(device)
-    checkpoint = torch.load('model_87.pth', map_location=device)
+    checkpoint = torch.load('model.pth', map_location=device)
     model.load_state_dict(checkpoint, strict=False)
 
     if torch.cuda.device_count() > 1:
@@ -133,12 +154,13 @@ for task_idx in range(600):
 
     for param in model.parameters():
         param.requires_grad = False
-    
+
     num_ftrs = model.fc.in_features
     model.fc = nn.Linear(num_ftrs, 80)
 
+
     fnn = nn.Sequential(
-        nn.Dropout(0.5),
+        #nn.Dropout(0.5),
         nn.ReLU(inplace=True),
         nn.Linear(80, 5),
     )
@@ -146,6 +168,7 @@ for task_idx in range(600):
     # Combine the ResNet18 model and the FNN
     fine_model = nn.Sequential(model, fnn).to(device)
     optimizer = torch.optim.Adam(fine_model.parameters(), lr=1e-3)
+    #optimizer = torch.optim.SGD(fine_model.parameters(), lr=0.1, momentum=0.9)
     #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.8)
     criterion = torch.nn.CrossEntropyLoss()
     fine_model.train()
@@ -167,7 +190,7 @@ for task_idx in range(600):
             _, predicted = torch.max(output.data, 1)
             sup_acc += (predicted == target.to(device)).sum().item()
         epoch += 1
-        #print("Task: {}, Epoch: {}, Accuarcy: {}, Loss: {}".format(task_idx, epoch, sup_acc/(25), sup_loss/(25)))
+        print("Task: {}, Epoch: {}, Accuarcy: {}, Loss: {}".format(task_idx, epoch, sup_acc/(25), sup_loss/(25)))
         # predict the qry images
         fine_model.eval()
         with torch.no_grad():

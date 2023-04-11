@@ -1,5 +1,5 @@
 # create conda environment by using the following command
-conda create --name 311511052 --file <this file>
+conda create --name 311511052 --file requirements.txt
 # activate conda environment
 conda activate 311511052
 # train model

@@ -171,24 +171,23 @@ class BeautyCrawler:
             soup = BeautifulSoup(r.text, 'html.parser')
             # find content with class bbs-screen
             content = soup.find('div', class_='bbs-screen')
-            # if keyword is in content, find until 發信站 is in content
+            
+            # crawl the image url only if the url is not in reply
+            
             if keyword in content.text:
-                while True:
-                    if '發信站' in content.text:
+                print(article_url)
+                lines = content.text.splitlines()
+                # search each line in content with image url until "※ 發信站" 
+                for line in lines:
+                    print(line)
+                    if '發信站' in line:
                         break
-                    content = content.find_next_sibling()
-                    # search all image url with http:// and https:// and ends with .jpg, .png, .gif, .jpeg
-                    # but filter cache.ptt.cc
-                    img_urls = requests.utils.re.findall(r'(https?://[^\s]*\.(?:jpg|png|gif|jpeg))', r.text)
-                    img_urls = [url for url in img_urls if 'cache.ptt.cc' not in url]
-                    # remove duplicate urls
-                    self.all_keywords_article_url += list(set(img_urls))
-
-            # if keyword in content.text:
-            #     img_urls = requests.utils.re.findall(r'(https?://[^\s]*\.(?:jpg|png|gif|jpeg))', r.text)
-            #     img_urls = [url for url in img_urls if 'cache.ptt.cc' not in url]
-            #     # remove duplicate urls
-            #     self.all_keywords_article_url += list(set(img_urls))
+                    # find each line with image url
+                    if keyword in line:
+                        img_urls = requests.utils.re.findall(r'(https?://[^\s]*\.(?:jpg|png|gif|jpeg))', r.text)
+                        img_urls = [url for url in img_urls if 'cache.ptt.cc' not in url]
+                        self.all_keywords_article_url += list(set(img_urls))
+                
             queue.task_done()
         
 if __name__ == '__main__':

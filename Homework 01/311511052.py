@@ -74,15 +74,15 @@ class BeautyCrawler:
                 "title": self.get_article_title(article),
                 "url": self.get_article_url(article)
             }
+
             # remove articles with [公告] or Fw: [公告] in title
             if '公告' in article_data['title'] or 'Fw: [公告]' in article_data['title']:
                 continue
             with open('all_article.jsonl', 'a', encoding="utf-8") as f:
-                f.write(str(article_data) + '\n')
+                f.write(json.dumps(article_data, ensure_ascii=False) + '\n')
             if self.get_vote(article) == '爆':
                 with open('all_popular.jsonl', 'a', encoding="utf-8") as f:
-                    f.write(str(article_data) + '\n')
-
+                    f.write(json.dumps(article_data, ensure_ascii=False) + '\n')
     def post_process_all_article(self):
         with open('all_article.jsonl', 'r', encoding="utf-8") as f:
             all_article = f.readlines()
@@ -171,12 +171,24 @@ class BeautyCrawler:
             soup = BeautifulSoup(r.text, 'html.parser')
             # find content with class bbs-screen
             content = soup.find('div', class_='bbs-screen')
-            # if keyword is in content, get image urls and return
+            # if keyword is in content, find until 發信站 is in content
             if keyword in content.text:
-                img_urls = requests.utils.re.findall(r'(https?://[^\s]*\.(?:jpg|png|gif|jpeg))', r.text)
-                img_urls = [url for url in img_urls if 'cache.ptt.cc' not in url]
-                # remove duplicate urls
-                self.all_keywords_article_url += list(set(img_urls))
+                while True:
+                    if '發信站' in content.text:
+                        break
+                    content = content.find_next_sibling()
+                    # search all image url with http:// and https:// and ends with .jpg, .png, .gif, .jpeg
+                    # but filter cache.ptt.cc
+                    img_urls = requests.utils.re.findall(r'(https?://[^\s]*\.(?:jpg|png|gif|jpeg))', r.text)
+                    img_urls = [url for url in img_urls if 'cache.ptt.cc' not in url]
+                    # remove duplicate urls
+                    self.all_keywords_article_url += list(set(img_urls))
+
+            # if keyword in content.text:
+            #     img_urls = requests.utils.re.findall(r'(https?://[^\s]*\.(?:jpg|png|gif|jpeg))', r.text)
+            #     img_urls = [url for url in img_urls if 'cache.ptt.cc' not in url]
+            #     # remove duplicate urls
+            #     self.all_keywords_article_url += list(set(img_urls))
             queue.task_done()
         
 if __name__ == '__main__':

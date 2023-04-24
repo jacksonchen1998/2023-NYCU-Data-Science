@@ -179,7 +179,6 @@ class BeautyCrawler:
                 lines = content.text.splitlines()
                 # search each line in content with image url until "※ 發信站" 
                 for line in lines:
-                    print(line)
                     if '發信站' in line:
                         break
                     # find each line with image url

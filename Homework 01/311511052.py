@@ -175,7 +175,6 @@ class BeautyCrawler:
             # crawl the image url only if the url is not in reply
             
             if keyword in content.text:
-                print(article_url)
                 lines = content.text.splitlines()
                 # search each line in content with image url until "※ 發信站" 
                 for line in lines:

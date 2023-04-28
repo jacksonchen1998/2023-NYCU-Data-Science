@@ -27,12 +27,12 @@ train_image = [x for x in train_data if x.endswith(".npy") == False]
 # sort train_image
 train_image.sort()
 
-print(len(train_image))
+# print(len(train_image))
 
 train_label = [x for x in train_data if x.endswith(".npy") == True]
 train_label.sort()
 
-print(len(train_label))
+# print(len(train_label))
 
 # %%
 # pytorch image generator
@@ -187,18 +187,18 @@ from torchsummary import summary
 model = Unet(n_class=1).to(device)
 
 # summary model
-summary(model, input_size=(1, 256, 256))
+# summary(model, input_size=(1, 256, 256))
 
 
 # %%
-image = train_loader.dataset[0]
+# image = train_loader.dataset[0]
 
 # %%
-plt.imshow(image.permute(1, 2, 0))
-plt.show()
+# plt.imshow(image.permute(1, 2, 0))
+# plt.show()
 
 # %%
-image.shape
+# image.shape
 
 # %%
 # feed image to model
@@ -210,13 +210,13 @@ print(output.squeeze(0).shape)
 # %%
 # show output image
 
-plt.imshow(output.squeeze(0).permute(1, 2, 0).detach().cpu().numpy(), cmap='gray')
+# plt.imshow(output.squeeze(0).permute(1, 2, 0).detach().cpu().numpy(), cmap='gray')
 
 # %%
 # show ground truth image
 
-print(label_loader.dataset[0].shape)
-plt.imshow(label_loader.dataset[0].permute(1, 2, 0).detach().cpu().numpy(), cmap='gray')
+# print(label_loader.dataset[0].shape)
+# plt.imshow(label_loader.dataset[0].permute(1, 2, 0).detach().cpu().numpy(), cmap='gray')
 
 # %%
 # bayesian loss for crowd counting with U-Net

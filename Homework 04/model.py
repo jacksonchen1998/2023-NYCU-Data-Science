@@ -116,8 +116,8 @@ ground_truth = Ground_Truth('train/', transform=train_transform)
 # using custom_dataset and ground_truth to train CSRNet
 
 # create dataloader
-train_loader = DataLoader(custom_dataset, batch_size=1, shuffle=False)
-label_loader = DataLoader(ground_truth, batch_size=1, shuffle=False)
+train_loader = DataLoader(custom_dataset, batch_size=64, shuffle=False)
+label_loader = DataLoader(ground_truth, batch_size=64, shuffle=False)
 
 # define device
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

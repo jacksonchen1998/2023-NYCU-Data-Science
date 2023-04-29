@@ -225,6 +225,8 @@ for i in range(epoch):
     model.train()
     # define loss
     loss = 0
+    
+    total_loss = 0
     # iterate over train_loader
     for image, label in zip(train_loader, label_loader):
         # feed image to model
@@ -233,25 +235,25 @@ for i in range(epoch):
         # loss = criterion(output.squeeze(0), label.to(device), torch.ones_like(output.squeeze(0)))
         
         loss = criterion1(output.squeeze(0), label.to(device))
-        # loss is 
+        total_loss += loss.item()
         
         optimizer.zero_grad()
         # backward loss
         loss.backward()
         # update parameters
         optimizer.step()
-        # append loss to train_loss
-        train_loss.append(loss.item())
-        # print loss
-        print("Epoch: {}, Loss: {}".format(i, loss.item()))
-        # upate lr
-        scheduler.step(loss.item())
-    
-        if loss.item() < best_loss:
-            best_loss = loss.item()
-            # save model
-            torch.save(model.state_dict(), 'best_model.pth')
-            print("Model saved !")
+    # append loss to train_loss
+    train_loss.append(total_loss/len(train_loader))
+    # print loss
+    print("Epoch: {}, Loss: {}".format(i, total_loss/len(train_loader)))
+    # upate lr
+    scheduler.step(total_loss/len(train_loader))
+
+    if total_loss/len(train_loader) < best_loss:
+        best_loss = total_loss/len(train_loader)
+        # save model
+        torch.save(model.state_dict(), 'best_model.pth')
+        print("Model saved !")
             
 
 #%%

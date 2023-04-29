@@ -230,7 +230,8 @@ for i in range(epoch):
         # calculate loss
         # loss = criterion(output.squeeze(0), label.to(device), torch.ones_like(output.squeeze(0)))
         
-        loss = criterion(output.squeeze(0), label.to(device))
+        loss = criterion1(output.squeeze(0), label.to(device))
+        # loss is 
         
         optimizer.zero_grad()
         # backward loss

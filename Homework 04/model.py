@@ -270,5 +270,37 @@ for i in range(epoch):
     # print loss
     print("Epoch: {}, Loss: {}".format(i, loss.item()))
     # zero grad
+    
 
 
+#%%
+
+# save model
+torch.save(model.state_dict(), 'model.pth')
+
+# predict test image
+
+test_dataset = CustomDataset('test/', transform=None)
+
+test_loader = DataLoader(test_dataset, batch_sizz=1, shuffle=False)
+
+pred = np.zeros(len(test_loader))
+
+# predict the test image from test_loader
+
+for image in test_loader:
+    predict = model(image.to(device))
+    # using np sum to calculate the number of people
+    pred.append(np.sum(predict.squeeze(0).detach().cpu().numpy()))
+    
+#%%
+
+# output the pred as csv file
+
+import csv
+
+with open('result.csv', 'w', newline='') as csvfile:
+    writer = csv.writer(csvfile)
+    writer.writerow(['ID', 'Count'])
+    for i in range(len(pred)):
+        writer.writerow([i+1, pred[i]])

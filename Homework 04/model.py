@@ -282,7 +282,7 @@ torch.save(model.state_dict(), 'model.pth')
 
 test_dataset = CustomDataset('test/', transform=None)
 
-test_loader = DataLoader(test_dataset, batch_sizz=1, shuffle=False)
+test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
 pred = np.zeros(len(test_loader))
 

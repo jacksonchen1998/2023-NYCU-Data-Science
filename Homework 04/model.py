@@ -205,6 +205,8 @@ optimizer = torch.optim.Adam(model.parameters(), lr=5e-4)
 # define loss function
 criterion = BayesianLoss()
 
+criterion1 = nn.L1Loss()
+
 # scheduler
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.8, patience=5, min_lr=1e-5, verbose=True)
 
@@ -226,7 +228,10 @@ for i in range(epoch):
         # feed image to model
         output = model(image.to(device))
         # calculate loss
-        loss = criterion(output.squeeze(0), label.to(device), torch.ones_like(output.squeeze(0)))
+        # loss = criterion(output.squeeze(0), label.to(device), torch.ones_like(output.squeeze(0)))
+        
+        loss = criterion(output.squeeze(0), label.to(device))
+        
         optimizer.zero_grad()
         # backward loss
         loss.backward()

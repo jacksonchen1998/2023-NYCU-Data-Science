@@ -213,6 +213,8 @@ scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', fa
 # define epoch
 epoch = 100
 
+best_loss = 1e10
+
 # define list to store loss
 train_loss = []
 
@@ -238,17 +240,24 @@ for i in range(epoch):
         loss.backward()
         # update parameters
         optimizer.step()
-    # append loss to train_loss
-    train_loss.append(loss.item())
-    # print loss
-    print("Epoch: {}, Loss: {}".format(i, loss.item()))
-    # zero grad
-
+        # append loss to train_loss
+        train_loss.append(loss.item())
+        # print loss
+        print("Epoch: {}, Loss: {}".format(i, loss.item()))
+        # upate lr
+        scheduler.step(loss.item())
+    
+        if loss.item() < best_loss:
+            best_loss = loss.item()
+            # save model
+            torch.save(model.state_dict(), 'best_model.pth')
+            print("Model saved !")
+            
 
 #%%
 
-# save model
-torch.save(model.state_dict(), 'model.pth')
+# load best model
+model.load_state_dict(torch.load('best_model.pth'))
 
 test_transform = transforms.Compose([transforms.Resize((256, 256)),
                                         transforms.ToTensor(),

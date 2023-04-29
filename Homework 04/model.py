@@ -11,7 +11,16 @@ import torch
 from PIL import Image
 import cv2
 from tqdm import tqdm
+# pytorch image generator
+from torch.utils.data import Dataset, DataLoader
+from torchvision import transforms, utils
+# torchvision import
+import torchvision
+import warnings
 
+warnings.filterwarnings("ignore")
+
+# %%
 # load file from train folder
 def load_file(path):
     file_list = []
@@ -35,10 +44,6 @@ train_label.sort()
 # print(len(train_label))
 
 # %%
-# pytorch image generator
-from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms, utils
-
 train_transform = transforms.Compose([transforms.Resize((256, 256)),
                                         transforms.ToTensor(),
                                         transforms.RandomAffine(30, translate=(0.2, 0.2), scale=(0.8, 1.2), shear=30),
@@ -123,9 +128,6 @@ label_loader = DataLoader(ground_truth, batch_size=64, shuffle=False)
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # %%
-# torchvision import
-import torchvision
-
 class Decoder(nn.Module):
   def __init__(self, in_channels, middle_channels, out_channels):
     super(Decoder, self).__init__()
@@ -144,7 +146,7 @@ class Unet(nn.Module):
     def __init__(self, n_class):
         super().__init__()
 
-        self.base_model = torchvision.models.resnet18(True)
+        self.base_model = torchvision.models.resnet18(False)
         self.base_layers = list(self.base_model.children())
         self.layer1 = nn.Sequential(
             nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False),
@@ -180,43 +182,8 @@ class Unet(nn.Module):
         return out
 
 # %%
-# model to summary
-from torchsummary import summary
-
-# define model
+# define model and no pretain weight
 model = Unet(n_class=1).to(device)
-
-# summary model
-# summary(model, input_size=(1, 256, 256))
-
-
-# %%
-# image = train_loader.dataset[0]
-
-# %%
-# plt.imshow(image.permute(1, 2, 0))
-# plt.show()
-
-# %%
-# image.shape
-
-# %%
-# feed image to model
-
-output = model(image.unsqueeze(0).to(device))
-
-print(output.squeeze(0).shape)
-
-# %%
-# show output image
-
-# plt.imshow(output.squeeze(0).permute(1, 2, 0).detach().cpu().numpy(), cmap='gray')
-
-# %%
-# show ground truth image
-
-# print(label_loader.dataset[0].shape)
-# plt.imshow(label_loader.dataset[0].permute(1, 2, 0).detach().cpu().numpy(), cmap='gray')
 
 # %%
 # bayesian loss for crowd counting with U-Net
@@ -270,7 +237,6 @@ for i in range(epoch):
     # print loss
     print("Epoch: {}, Loss: {}".format(i, loss.item()))
     # zero grad
-    
 
 
 #%%
@@ -278,9 +244,14 @@ for i in range(epoch):
 # save model
 torch.save(model.state_dict(), 'model.pth')
 
+test_transform = transforms.Compose([transforms.Resize((256, 256)),
+                                        transforms.ToTensor(),
+                                        transforms.Grayscale(num_output_channels=1), # turn image to 1 channel
+                                        ])
+
 # predict test image
 
-test_dataset = CustomDataset('test/', transform=None)
+test_dataset = CustomDataset('test/', transform=test_transform)
 
 test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
@@ -288,11 +259,14 @@ pred = np.zeros(len(test_loader))
 
 # predict the test image from test_loader
 
+index = 0
+
 for image in test_loader:
     predict = model(image.to(device))
     # using np sum to calculate the number of people
-    pred.append(np.sum(predict.squeeze(0).detach().cpu().numpy()))
-    
+    print("Index: {}, The number of people: {}".format(index, np.sum(predict.cpu().detach().numpy())))
+    pred[index] = np.sum(predict.cpu().detach().numpy())
+    index += 1
 #%%
 
 # output the pred as csv file

@@ -279,11 +279,13 @@ pred = np.zeros(len(test_loader))
 index = 0
 
 for image in test_loader:
-    predict = model(image.to(device))
-    # using np sum to calculate the number of people
-    print("Index: {}, The number of people: {}".format(index, np.sum(predict.cpu().detach().numpy())))
-    pred[index] = np.sum(predict.cpu().detach().numpy())
-    index += 1
+    model.eval()
+    with torch.no_grad():
+        predict = model(image.to(device))
+        # using np sum to calculate the number of people
+        print("Index: {}, The number of people: {}".format(index, np.sum(predict.cpu().detach().numpy())))
+        pred[index] = np.sum(predict.cpu().detach().numpy())
+        index += 1
 #%%
 
 # output the pred as csv file

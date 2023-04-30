@@ -51,7 +51,7 @@ train_transform = transforms.Compose([transforms.Resize((256, 256)),
                                         transforms.RandomCrop(256, pad_if_needed=True),
                                         transforms.Grayscale(num_output_channels=1), # turn image to 1 channel
                                         # turn image to 1 channel
-                                        transforms.Normalize([0.5], [0.5]), # normalize image to [-1, 1]
+                                        #transforms.Normalize([0.5], [0.5]), # normalize image to [-1, 1]
                                         transforms.GaussianBlur(3, sigma=(0.1, 2.0)),
                                         ])
 
@@ -61,6 +61,8 @@ class CustomDataset(Dataset):
         self.path = path
         self.transform = transform
         self.file_list = []
+        self.get_width = []
+        self.get_height = []
         for file in os.listdir(self.path):
             # remove npy file format from train_data
             if file.endswith(".npy") == False:
@@ -72,6 +74,8 @@ class CustomDataset(Dataset):
     
     def __getitem__(self, idx):
         image = Image.open(self.path + self.file_list[idx])
+        self.get_width.append(image.size[0])
+        self.get_height.append(image.size[1])
         image = self.transform(image)
         return image
     
@@ -198,6 +202,31 @@ class BayesianLoss(nn.Module):
         # calculate loss
         loss = torch.sum((pred - gt)**2 / var + torch.log(var))
         return loss
+        
+class Bay_Loss(nn.Module):
+    def __init__(self, use_background, device):
+        super(Bay_Loss, self).__init__()
+        self.device = device
+        self.use_bg = use_background
+
+    def forward(self, prob_list, target_list, pre_density):
+        loss = 0
+        for idx, prob in enumerate(prob_list):  # iterative through each sample
+            if prob is None:  # image contains no annotation points
+                pre_count = torch.sum(pre_density[idx])
+                target = torch.zeros((1,), dtype=torch.float32, device=self.device)
+            else:
+                N = len(prob)
+                if self.use_bg:
+                    target = torch.zeros((N,), dtype=torch.float32, device=self.device)
+                    target[:-1] = target_list[idx]
+                else:
+                    target = target_list[idx]
+                pre_count = torch.sum(pre_density[idx].view((1, -1)) * prob, dim=1)  # flatten into vector
+
+            loss += torch.sum(torch.abs(target - pre_count))
+        loss = loss / len(prob_list)
+        return 
     
 # define optimizer
 optimizer = torch.optim.Adam(model.parameters(), lr=5e-4)
@@ -206,6 +235,8 @@ optimizer = torch.optim.Adam(model.parameters(), lr=5e-4)
 criterion = BayesianLoss()
 
 criterion1 = nn.L1Loss()
+
+criterion2 = Bay_Loss(use_background=True, device=device)
 
 # scheduler
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.8, patience=5, min_lr=1e-5, verbose=True)
@@ -219,7 +250,7 @@ best_loss = 1e10
 train_loss = []
 
 # %%
-# train model
+#train model
 for i in range(epoch):
     # set model to train mode
     model.train()
@@ -232,8 +263,7 @@ for i in range(epoch):
         # feed image to model
         output = model(image.to(device))
         # calculate loss
-        # loss = criterion(output.squeeze(0), label.to(device), torch.ones_like(output.squeeze(0)))
-        
+        #loss = criterion2(output.squeeze(0), label.to(device), torch.ones_like(output.squeeze(0)))
         loss = criterion1(output.squeeze(0), label.to(device))
         total_loss += loss.item()
         
@@ -252,14 +282,14 @@ for i in range(epoch):
     if total_loss/len(train_loader) < best_loss:
         best_loss = total_loss/len(train_loader)
         # save model
-        torch.save(model.state_dict(), 'best_model.pth')
+        torch.save(model.state_dict(), 'best_model_no.pth')
         print("Model saved !")
             
 
 #%%
 
 # load best model
-model.load_state_dict(torch.load('best_model.pth'))
+model.load_state_dict(torch.load('best_model_no.pth'))
 
 test_transform = transforms.Compose([transforms.Resize((256, 256)),
                                         transforms.ToTensor(),
@@ -282,17 +312,18 @@ for image in test_loader:
     model.eval()
     with torch.no_grad():
         predict = model(image.to(device))
+        # get the size of the image
+        width, height = test_dataset.get_width[index], test_dataset.get_width[index]
+        #print("Width: {}, Height: {}".format(width, height))
         # using np sum to calculate the number of people
-        print("Index: {}, The number of people: {}".format(index, np.sum(predict.cpu().detach().numpy())))
-        pred[index] = np.sum(predict.cpu().detach().numpy())
+        print("Index: {}, The number of people: {}".format(index, np.sum(predict.detach().cpu().numpy()) / (256 * 256) * (width * height)))
+        pred[index] = np.sum(predict.detach().cpu().numpy()) / (256 * 256) * (width * height)
         index += 1
-#%%
-
-# output the pred as csv file
-
+        
+        
 import csv
 
-with open('result.csv', 'w', newline='') as csvfile:
+with open('no.csv', 'w', newline='') as csvfile:
     writer = csv.writer(csvfile)
     writer.writerow(['ID', 'Count'])
     for i in range(len(pred)):

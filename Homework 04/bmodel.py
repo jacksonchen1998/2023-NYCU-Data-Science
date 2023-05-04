@@ -172,12 +172,21 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 model = vgg19().to(device)
 
+# model load pretrained model
+# download pretrained model from https://download.pytorch.org/models/vgg19-dcbb9e9d.pth
+# pretrained_dict = torch.load('./vgg19-dcbb9e9d.pth')
+# model_dict = model.state_dict()
+# pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
+# model_dict.update(pretrained_dict)
+# model.load_state_dict(model_dict)
+
 # %%
 batch_size = 8
 num_workers = 4
-learning_rate = 8e-5
+learning_rate = 2e-5
+total_epoch = 1000
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-4)
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.8, patience=5, min_lr=8e-6, verbose=True)
+scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=total_epoch, eta_min=8e-06) # T_max means total epoch
 
 # %%
 def train_collate(batch):
@@ -212,7 +221,6 @@ post_prob = Post_Prob(sigma=8.0, c_size=512, stride=8, background_ratio=1, use_b
 criterion = Bay_Loss(use_background=True, device=device)
 
 # %%
-total_epoch = 1000
 best_loss = 1e6
 best_mae = 1e6
 best_mse = 1e6
@@ -262,7 +270,7 @@ for epoch in range(total_epoch):
         best_rmse = temp_rmse / len(dataloaders['train'])
         torch.save(model.state_dict(), 'best_model.pth')
         print('Model Saved!')
-    scheduler.step(loss.item())
+    scheduler.step(temp_loss / len(dataloaders['train']))
     print('-' * 40)
     print()
 

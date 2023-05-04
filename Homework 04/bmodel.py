@@ -77,10 +77,10 @@ class Crowd(Dataset):
             keypoints = np.load(gd_path)
             return self.train_transform(img, keypoints)
         elif self.method == 'test':
-            keypoints = np.load(gd_path)
+            #keypoints = np.load(gd_path)
             img = self.trans(img)
             name = os.path.basename(img_path).split('.')[0]
-            return img, len(keypoints), name
+            return img, name
 
     def train_transform(self, img, keypoints):
         """random crop image patch and find people in it"""
@@ -175,9 +175,9 @@ model = vgg19().to(device)
 # %%
 batch_size = 8
 num_workers = 4
-learning_rate = 1e-4
-optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.8, patience=5, min_lr=1e-5, verbose=True)
+learning_rate = 8e-5
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-4)
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.8, patience=5, min_lr=8e-6, verbose=True)
 
 # %%
 def train_collate(batch):
@@ -267,20 +267,28 @@ for epoch in range(total_epoch):
     print()
 
 torch.save(model.state_dict(), 'final_model.pth')
-
+    
 # %%
 # test
+
+test_dataset = Crowd(os.path.join('./', 'test'), 512, 8, is_gray=False, method='test')
+
+test_loader = torch.utils.data.DataLoader(test_dataset, 1, shuffle=False,
+                                             num_workers=0, pin_memory=False)
+
 model.load_state_dict(torch.load('best_model.pth'))
 model.eval()
 
-pred = np.zeros(len(dataloaders['test'].dataset))
+pred = np.zeros(len(test_loader))
+index = 0
 
-for i, (img, target) in enumerate(dataloaders['test']):
+for img, name in test_loader:
     img = img.to(device)
-    output = model(img)
-    pred[i] = output.detach().cpu().numpy().squeeze()
-    print('Index: {:d}, Pred: {:4f}, GT: {:4f}'.format(i, pred[i], target[0]))
-
+    with torch.no_grad():
+        output = model(img)
+        print("Name: {}, People: {}".format(name, torch.sum(output).item()))
+        pred[index] = torch.sum(output).item()
+    index += 1
 
 
 # %%

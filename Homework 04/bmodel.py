@@ -294,10 +294,10 @@ for epoch in range(total_epoch):
         print('Model Saved!')
 
     print('Train')
-    print('Best Loss: {:.4f}, Current Loss: {:.4f}'.format(best_loss, train_loss / len(train_loader)))
-    print('Best MAE: {:.4f}, Current MAE: {:.4f}'.format(best_mae, train_mae / len(train_loader)))
-    print('Best MSE: {:.4f}, Current MSE: {:.4f}'.format(best_mse, train_mse / len(train_loader)))
-    print('Best RMSE: {:.4f}, Current RMSE: {:.4f}'.format(best_rmse, train_rmse / len(train_loader)))
+    print('Current Loss: {:.4f}'.format(train_loss / len(train_loader)))
+    print('Current MAE: {:.4f}'.format(train_mae / len(train_loader)))
+    print('Current MSE: {:.4f}'.format(train_mse / len(train_loader)))
+    print('Current RMSE: {:.4f}'.format(train_rmse / len(train_loader)))
 
     print()
     

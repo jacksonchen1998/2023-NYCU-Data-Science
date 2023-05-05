@@ -77,7 +77,6 @@ class Crowd(Dataset):
             keypoints = np.load(gd_path)
             return self.train_transform(img, keypoints)
         elif self.method == 'test':
-            #keypoints = np.load(gd_path)
             img = self.trans(img)
             name = os.path.basename(img_path).split('.')[0]
             return img, name
@@ -87,23 +86,8 @@ class Crowd(Dataset):
         wd, ht = img.size
         st_size = min(wd, ht)
         assert st_size >= self.c_size # assert the crop size is smaller than the original image
-        #assert len(keypoints) > 0 # assert there is at least one person in the image
         i, j, h, w = random_crop(ht, wd, self.c_size, self.c_size)
         img = transforms.functional.crop(img, i, j, h, w)
-        
-        #nearest_dis = np.clip(keypoints[:, 2], 4.0, 128.0)
-
-        # nearest_dis = np.minimum(keypoints[:, 0], keypoints[:, 1])
-        # nearest_dis = np.clip(nearest_dis, 0.0, st_size)
-
-        # points_left_up = keypoints[:, :2] - nearest_dis[:, None] / 2.0
-        # points_right_down = keypoints[:, :2] + nearest_dis[:, None] / 2.0
-        # bbox = np.concatenate((points_left_up, points_right_down), axis=1)
-        # inner_area = cal_innner_area(j, i, j+w, i+h, bbox)
-        # origin_area = nearest_dis * nearest_dis
-        # # ratio = np.clip(1.0 * inner_area / origin_area, 0.0, 1.0)
-        # mask = (ratio >= 0.5)
-        # keypoints = keypoints[mask]
 
         if len(keypoints) > 0:
             idx_mask = (keypoints[:, 0] >= j) * (keypoints[:, 0] <= j + 512) * (keypoints[:, 1] >= i) * (keypoints[:, 1] <= i + 512)
@@ -202,17 +186,6 @@ datasets = {x: Crowd(os.path.join('./', x),
                                   downsample_ratio=8,
                                   is_gray=False) for x in ['train', 'test']}
 
-# dataloaders = {x: DataLoader(datasets[x],
-#                                           collate_fn=(train_collate
-#                                                       if x == 'train' else default_collate),
-#                                           batch_size=(batch_size
-#                                           if x == 'train' else 1),
-#                                           shuffle=(True if x == 'train' else False),
-#                                           num_workers=num_workers,
-#                                           pin_memory=(True if x == 'train' else False))
-#                             for x in ['train', 'test']}
-# dataloaders = {x: DataLoader(datasets[x], collate_fn=train_collate, batch_size=batch_size, shuffle=True, num_workers=num_workers) 
-#             for x in ['train', 'test']}
 dataset_sizes = {x: len(datasets[x]) for x in ['train', 'test']}
 
 

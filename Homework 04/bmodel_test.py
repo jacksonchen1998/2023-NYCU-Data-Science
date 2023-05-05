@@ -172,14 +172,6 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 model = vgg19().to(device)
 
-# model load pretrained model
-# download pretrained model from https://download.pytorch.org/models/vgg19-dcbb9e9d.pth
-# pretrained_dict = torch.load('./vgg19-dcbb9e9d.pth')
-# model_dict = model.state_dict()
-# pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
-# model_dict.update(pretrained_dict)
-# model.load_state_dict(model_dict)
-
 # %%
 batch_size = 8
 num_workers = 4
@@ -202,117 +194,6 @@ datasets = {x: Crowd(os.path.join('./', x),
                                   downsample_ratio=8,
                                   is_gray=False) for x in ['train', 'test']}
 
-# dataloaders = {x: DataLoader(datasets[x],
-#                                           collate_fn=(train_collate
-#                                                       if x == 'train' else default_collate),
-#                                           batch_size=(batch_size
-#                                           if x == 'train' else 1),
-#                                           shuffle=(True if x == 'train' else False),
-#                                           num_workers=num_workers,
-#                                           pin_memory=(True if x == 'train' else False))
-#                             for x in ['train', 'test']}
-# dataloaders = {x: DataLoader(datasets[x], collate_fn=train_collate, batch_size=batch_size, shuffle=True, num_workers=num_workers) 
-#             for x in ['train', 'test']}
-dataset_sizes = {x: len(datasets[x]) for x in ['train', 'test']}
-
-
-# %%
-post_prob = Post_Prob(sigma=8.0, c_size=512, stride=8, background_ratio=1, use_background=True, device=device)
-criterion = Bay_Loss(use_background=True, device=device)
-
-# %%
-best_loss = 1e6
-best_mae = 1e6
-best_mse = 1e6
-best_rmse = 1e6
-
-# random spilt train and val from train dataset
-train_idx, val_idx = torch.utils.data.random_split(range(dataset_sizes['train']), [int(dataset_sizes['train'] * 0.8), int(dataset_sizes['train'] * 0.2)])
-train_loader = DataLoader(datasets['train'], collate_fn=train_collate, batch_size=batch_size, shuffle=True, num_workers=num_workers)
-val_loader = DataLoader(datasets['train'], collate_fn=train_collate, batch_size=batch_size, shuffle=True, num_workers=num_workers)
-
-for epoch in range(total_epoch):
-    
-    train_loss, train_mae, train_mse, train_rmse = 0.0, 0.0, 0.0, 0.0
-    val_loss, val_mae, val_mse, val_rmse = 0.0, 0.0, 0.0, 0.0
-
-    print('Epoch {}/{}'.format(epoch, total_epoch - 1))
-    print('-' * 40)
-    model.train()
-    for steps, (inputs, points, targets, st_sizes) in enumerate(train_loader):
-        inputs = inputs.to(device)
-        points = [point.to(device) for point in points]
-        targets = [target.to(device) for target in targets]
-        st_sizes = st_sizes.to(device)
-        gd_count = np.array([len(p) for p in points], dtype=np.float32)
-
-        with torch.set_grad_enabled(True):
-            outputs = model(inputs)
-            prob_list = post_prob(points, st_sizes)
-            loss = criterion(prob_list, targets, outputs)
-
-            train_loss += loss.item()
-           
-            N = inputs.size(0)
-            pre_count = torch.sum(outputs.view(N, -1), dim=1).detach().cpu().numpy()
-            res = pre_count - gd_count
-            train_mae += np.mean(np.fabs(res))
-            train_mse += np.mean(res ** 2)
-            train_rmse += np.sqrt(np.mean(res ** 2))
-
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-
-    for steps, (inputs, points, targets, st_sizes) in enumerate(val_loader):
-        inputs = inputs.to(device)
-        points = [point.to(device) for point in points]
-        targets = [target.to(device) for target in targets]
-        st_sizes = st_sizes.to(device)
-        gd_count = np.array([len(p) for p in points], dtype=np.float32)
-
-        with torch.set_grad_enabled(False):
-            outputs = model(inputs)
-            prob_list = post_prob(points, st_sizes)
-            loss = criterion(prob_list, targets, outputs)
-
-            val_loss += loss.item()
-            
-            N = inputs.size(0)
-            pre_count = torch.sum(outputs.view(N, -1), dim=1).detach().cpu().numpy()
-            res = pre_count - gd_count
-            val_mae += np.mean(np.fabs(res))
-            val_mse += np.mean(res ** 2)
-            val_rmse += np.sqrt(np.mean(res ** 2))
-
-    if (val_loss / len(val_loader)) < best_loss:
-        best_loss = val_loss / len(val_loader)
-        best_mae = val_mae / len(val_loader)
-        best_mse = val_mse / len(val_loader)
-        best_rmse = val_rmse / len(val_loader)
-        torch.save(model.state_dict(), 'best_model.pth')
-        print('Model Saved!')
-
-    print('Train')
-    print('Current Loss: {:.4f}'.format(train_loss / len(train_loader)))
-    print('Current MAE: {:.4f}'.format(train_mae / len(train_loader)))
-    print('Current MSE: {:.4f}'.format(train_mse / len(train_loader)))
-    print('Current RMSE: {:.4f}'.format(train_rmse / len(train_loader)))
-
-    print()
-    
-    print('Val')
-    print('Best Loss: {:.4f}, Current Loss: {:.4f}'.format(best_loss, val_loss / len(val_loader)))
-    print('Best MAE: {:.4f}, Current MAE: {:.4f}'.format(best_mae, val_mae / len(val_loader)))
-    print('Best MSE: {:.4f}, Current MSE: {:.4f}'.format(best_mse, val_mse / len(val_loader)))
-    print('Best RMSE: {:.4f}, Current RMSE: {:.4f}'.format(best_rmse, val_rmse / len(val_loader)))
-
-    scheduler.step(val_loss / len(val_loader))
-    print('-' * 40)
-    print()
-
-torch.save(model.state_dict(), 'final_model.pth')
-    
 # %%
 # test
 
@@ -344,5 +225,4 @@ with open('result.csv', 'w', newline='') as csvfile:
     writer.writerow(['ID', 'Count'])
     for i in range(len(pred)):
         writer.writerow([i+1, pred[i]])
-
 

@@ -62,6 +62,21 @@ This is the repository for the 2023-NYCU-Data-Science course homework.
     </tr>
 </table>
 
+## Homework 5
+
+[Headline Generation](./Homework%2005/README.md)
+
+<table>
+    <tr>
+        <th>
+            <img src = "./image/hw5_1.jpeg">
+        </th>
+        <th>
+            <img src = "./image/hw5_2.jpeg">
+        </th>
+    </tr>
+</table>
+
 ## License
 
 All images in README.md are generated from [DALL-E](https://www.bing.com/images/create/)

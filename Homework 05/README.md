@@ -18,9 +18,17 @@ You should try to improve the headline quality to increase the performance.
 
 ## Method
 
+Using `T5-Small` model and fine-tune it on the dataset.
+
+- [A Full Guide to Finetuning T5 for Text2Text and Building a Demo with Streamlit](https://medium.com/nlplanet/a-full-guide-to-finetuning-t5-for-text2text-and-building-a-demo-with-streamlit-c72009631887)
+- [Hugging Face NLP Course Summarization](https://huggingface.co/learn/nlp-course/chapter7/5?fw=pt)
+
 ## Evaluation
 
 - ROUGE
+    - ROUGE-1
+    - ROUGE-2
+    - ROUGE-L
 - BERTScore
 
 ## Reference

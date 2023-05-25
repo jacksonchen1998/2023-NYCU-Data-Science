@@ -40,8 +40,6 @@ model.load_state_dict(torch.load('./model/checkpoint-8200/pytorch_model.bin'))
 # Usage example
 test_dataset = CustomDataset('./hw5_dataset/test.jsonl', has_title=False)
 
-answer = []
-
 model.eval()
 
 tokenizer = AutoTokenizer.from_pretrained(checkpoint)
@@ -51,14 +49,16 @@ tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 with open('sample_submission.json', 'w') as f:
     for i in range(len(test_dataset)):
         if test_dataset.bodies[i] == '':
-            answer.append({'title': ''})
             print(i, '')
             continue
-        input = tokenizer(test_dataset.bodies[i], max_length=512, truncation=True, padding=True, return_tensors="pt")
-        input_ids = input['input_ids']
-        attention_mask = input['attention_mask']
-        output = model.generate(input_ids=input_ids, attention_mask=attention_mask, max_length=150, num_beams=4, early_stopping=True)
-        output = tokenizer.decode(output[0], skip_special_tokens=True)
-        answer.append({'title': output})
-        print(i, output)
-    json.dump(answer, f)
+        else:
+            input = tokenizer(test_dataset.bodies[i], max_length=512, truncation=True, padding=True, return_tensors="pt")
+            input_ids = input['input_ids']
+            attention_mask = input['attention_mask']
+            output = model.generate(input_ids=input_ids, attention_mask=attention_mask, max_length=150, num_beams=4, early_stopping=True)
+            output = tokenizer.decode(output[0], skip_special_tokens=True)
+            print(i, output)
+        # write line by line
+        f.write(json.dumps({'title':output}) + '\n')
+        # refresh
+        f.flush()

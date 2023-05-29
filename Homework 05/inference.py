@@ -48,7 +48,7 @@ tokenizer = AutoTokenizer.from_pretrained(checkpoint)
 
 with open('sample_submission.json', 'w') as f:
     for i in range(len(test_dataset)):
-        if test_dataset.bodies[i] == '':
+        if test_dataset.bodies[i] == None:
             print(i, '')
             continue
         else:

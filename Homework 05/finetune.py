@@ -9,6 +9,9 @@ from transformers import AutoTokenizer
 import nltk
 import string
 import evaluate
+import warnings
+
+warnings.filterwarnings("ignore")
 
 class CustomDataset(Dataset):
     def __init__(self, file_path, has_title=True):
@@ -70,9 +73,6 @@ news_train_validation = news_clean_dataset.train_test_split(test_size=0.2, seed=
 news_train_dataset = news_train_validation['train'] # 65684
 news_validation_dataset = news_train_validation['test'] # 16422
 
-# print(len(news_train_dataset))
-# print(len(news_validation_dataset))
-
 news_train_dataset = news_train_dataset.shuffle(seed=42).select(range(len(news_train_dataset)))
 news_validation_dataset = news_validation_dataset.shuffle(seed=42).select(range(len(news_validation_dataset)))
 
@@ -112,7 +112,7 @@ validation_dataset = news_validation_dataset.map(preprocess_data, batched=True)
 
 batch_size = 8
 model_name = "t5-small-finetuned-summarizer"
-model_dir = "./model/"
+model_dir = "./model-epoch/"
 
 args = Seq2SeqTrainingArguments(
     model_dir,
@@ -127,7 +127,7 @@ args = Seq2SeqTrainingArguments(
     per_device_eval_batch_size=batch_size,
     weight_decay=0.01,
     save_total_limit=3,
-    num_train_epochs=1,
+    num_train_epochs=10,
     predict_with_generate=True,
     fp16=True,
     load_best_model_at_end=True,

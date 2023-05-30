@@ -77,6 +77,21 @@ This is the repository for the 2023-NYCU-Data-Science course homework.
     </tr>
 </table>
 
+## Homework 6
+
+[Graph Anomaly Detection](./Homework%2006/README.md)
+
+<table>
+    <tr>
+        <th>
+            <img src = "./image/hw6_1.jpeg">
+        </th>
+        <th>
+            <img src = "./image/hw6_2.jpeg">
+        </th>
+    </tr>
+</table>
+
 ## License
 
 All images in README.md are generated from [DALL-E](https://www.bing.com/images/create/)

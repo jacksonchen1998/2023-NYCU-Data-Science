@@ -1,5 +1,7 @@
 # 2023-NYCU-Data-Science
 
+[![license](https://img.shields.io/pypi/l/ansicolortags.svg)](LICENSE)
+
 This is the repository for the 2023-NYCU-Data-Science course homework.
 
 ## Homework 1

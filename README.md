@@ -4,6 +4,17 @@
 
 This is the repository for the 2023-NYCU-Data-Science course homework.
 
+## Difficulties
+
+|Homework|Difficulty (1-5 stars)|
+|:---:|:---:|
+|Homework 1|:star::star::star:|
+|Homework 2|:star::star::star:|
+|Homework 3|:star::star:|
+|Homework 4|:star::star::star::star::star:|
+|Homework 5|:star::star:|
+|Homework 6||
+
 ## Homework 1
 
 [Crawler / Popularity Predictor](./Homework%2001/README.md)

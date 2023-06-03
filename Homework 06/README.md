@@ -32,7 +32,32 @@ Feature: [num_of_nodes, dim_of_node_feature]
 Label: [num_of_nodes]
 - Anomaly: 1 , Normal: 0
 
+## Libraries installation
+
+Because we need to use `torch_geometric`, here're some tips to install those packages.
+
+[Stackoverflow Q/A](https://stackoverflow.com/questions/74794453/torch-geometric-module-not-found/76394639#76394639)
+
 ## Method
+
+I use Graph Convolutional Network (GCN) to solve this problem.
+
+The network architecture is shown below:
+
+```
+GCNAnomalyDetector(
+  (conv1): GCNConv(in_channels=num_features, out_channels=hidden_size)
+  (conv2): GCNConv(in_channels=hidden_size, out_channels=hidden_size)
+  (fc): Linear(in_features=hidden_size, out_features=1)
+)
+```
+
+In this architecture:
+- The input features of each node are passed through the first GCNConv layer (`conv1`), which takes `num_features` input channels and produces `hidden_size` output channels. The output is then passed through a ReLU activation function.
+- The output from the first GCNConv layer is fed into the second GCNConv layer (`conv2`), which has `hidden_size` input channels and `hidden_size` output channels. Again, the output is passed through a ReLU activation function.
+- Finally, the output from the second GCNConv layer is fed into a linear layer (`fc`), which maps the `hidden_size` features to a single output value. The output is then squeezed to remove the extra dimension and returned.
+
+This architecture allows the model to capture and propagate information through the graph structure, ultimately predicting the anomaly scores for each node.
 
 ## Reference
 

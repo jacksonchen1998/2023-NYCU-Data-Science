@@ -13,7 +13,7 @@ This is the repository for the 2023-NYCU-Data-Science course homework.
 |Homework 3|:star::star:|
 |Homework 4|:star::star::star::star::star:|
 |Homework 5|:star::star:|
-|Homework 6||
+|Homework 6|:star:|
 
 ## Homework 1
 

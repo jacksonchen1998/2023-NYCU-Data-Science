@@ -64,11 +64,10 @@ class GCNAnomalyDetector(nn.Module):
 ```
 
 In this architecture:
-- The input features of each node are passed through the first GCNConv layer (`conv1`), which takes `num_features` input channels and produces `hidden_size` output channels. The output is then passed through a ReLU activation function.
-- The output from the first GCNConv layer is fed into the second GCNConv layer (`conv2`), which has `hidden_size` input channels and `hidden_size` output channels. Again, the output is passed through a ReLU activation function.
-- Finally, the output from the second GCNConv layer is fed into a linear layer (`fc`), which maps the `hidden_size` features to a single output value. The output is then squeezed to remove the extra dimension and returned.
 
-This architecture allows the model to capture and propagate information through the graph structure, ultimately predicting the anomaly scores for each node.
+- The first layer is a GCN layer with 10 input features and 32 output features.
+- The second layer is a GCN layer with 32 input features and 64 output features.
+- The third layer is a fully connected layer with 64+10 input features and 1 output feature.
 
 ## Reference
 

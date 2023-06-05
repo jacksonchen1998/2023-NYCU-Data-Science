@@ -2,24 +2,25 @@ import torch
 import numpy as np
 import torch.nn as nn
 import torch.optim as optim
-from torch_geometric.data import DataLoader
 from torch_geometric.nn import GCNConv
-from sklearn.metrics import roc_auc_score
 from tqdm import tqdm
 
 # Define the Graph Neural Network model
+# concatenate with its own node feature
 class GCNAnomalyDetector(nn.Module):
     def __init__(self, num_features, hidden_size):
         super(GCNAnomalyDetector, self).__init__()
         self.conv1 = GCNConv(num_features, hidden_size)
-        self.conv2 = GCNConv(hidden_size, hidden_size)
-        self.fc = nn.Linear(hidden_size, 1)
+        self.conv2 = GCNConv(hidden_size, hidden_size*2)
+        self.fc = nn.Linear(hidden_size*2+10, 1)
 
     def forward(self, x, edge_index):
+        x_1 = x
         x = self.conv1(x, edge_index)
         x = torch.relu(x)
         x = self.conv2(x, edge_index)
-        x = torch.relu(x)
+        x_2 = torch.relu(x)
+        x = torch.cat((x_1, x_2), dim=1)
         x = self.fc(x).squeeze(1)
         return x
 
@@ -42,23 +43,29 @@ train_mask = torch.from_numpy(np.load('train_mask.npy')).bool()
 # torch.Tensor, 39657
 test_mask = torch.from_numpy(np.load('test_mask.npy')).bool()
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 # Create the model and optimizer
-num_epochs = 15
-model = GCNAnomalyDetector(num_features=train_feature.shape[1], hidden_size=64)
-optimizer = optim.Adam(model.parameters(), lr=5e-4)
-scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_epochs, eta_min=1e-6)
+num_epochs = 10000
+model = GCNAnomalyDetector(num_features=train_feature.shape[1], hidden_size=32).to(device)
+optimizer = optim.AdamW(model.parameters(), lr=5e-4, weight_decay=5e-4)
+scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_epochs, eta_min=1e-5)
 
 # Training loop
 model.train()
 pbar = tqdm(total=num_epochs, desc='Training')
 for epoch in range(num_epochs):
     optimizer.zero_grad()
+    train_feature = train_feature.to(device)
+    train_edge_index = train_edge_index.to(device)
+    train_label = train_label.to(device)
     logits = model(train_feature, train_edge_index)
     loss = nn.CrossEntropyLoss()(logits[train_mask], train_label.float())
     loss.backward()
     optimizer.step()
     scheduler.step()
     pbar.update(1)
+    pbar.set_postfix({'Epoch': epoch+1, 'Loss': loss.item()})
 pbar.close()
 
 # Save the trained model
@@ -76,6 +83,8 @@ model.load_state_dict(torch.load('gcn_anomaly_model.pt'))
 
 model.eval()
 with torch.no_grad():
+    test_feature = test_feature.to(device)
+    test_edge_index = test_edge_index.to(device)
     logits = model(test_feature, test_edge_index)
     # calculate the probability of each node being anomalous
     prob = torch.sigmoid(logits)

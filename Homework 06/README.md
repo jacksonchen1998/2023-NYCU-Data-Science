@@ -45,11 +45,22 @@ I use Graph Convolutional Network (GCN) to solve this problem.
 The network architecture is shown below:
 
 ```
-GCNAnomalyDetector(
-  (conv1): GCNConv(in_channels=num_features, out_channels=hidden_size)
-  (conv2): GCNConv(in_channels=hidden_size, out_channels=hidden_size)
-  (fc): Linear(in_features=hidden_size, out_features=1)
-)
+class GCNAnomalyDetector(nn.Module):
+    def __init__(self, num_features, hidden_size):
+        super(GCNAnomalyDetector, self).__init__()
+        self.conv1 = GCNConv(num_features, hidden_size)
+        self.conv2 = GCNConv(hidden_size, hidden_size*2)
+        self.fc = nn.Linear(hidden_size*2+10, 1)
+
+    def forward(self, x, edge_index):
+        x_1 = x
+        x = self.conv1(x, edge_index)
+        x = torch.relu(x)
+        x = self.conv2(x, edge_index)
+        x_2 = torch.relu(x)
+        x = torch.cat((x_1, x_2), dim=1)
+        x = self.fc(x).squeeze(1)
+        return x
 ```
 
 In this architecture:

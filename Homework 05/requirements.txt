@@ -40,7 +40,6 @@ huggingface-hub=0.14.1=pypi_0
 idna=3.4=py38h06a4308_0
 intel-openmp=2023.1.0=hdb19cb5_46305
 jinja2=3.1.2=py38h06a4308_0
-joblib=1.2.0=pypi_0
 jpeg=9e=h5eee18b_1
 lame=3.100=h7b6447c_0
 lcms2=2.12=h3be6417_0
